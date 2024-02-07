@@ -2,7 +2,8 @@ package model
 
 import (
 	"context"
-	"sbc/src/entity"
+
+	"sip-monitor/src/entity"
 
 	"go.mongodb.org/mongo-driver/bson"
 )

@@ -6,16 +6,17 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
-	"sbc/src/pkg/siprocket"
 	"strconv"
 	"strings"
 	"time"
 
-	"sbc/src/entity"
-	"sbc/src/model"
-	"sbc/src/pkg/env"
-	"sbc/src/pkg/hep"
-	"sbc/src/pkg/parser"
+	"sip-monitor/src/pkg/siprocket"
+
+	"sip-monitor/src/entity"
+	"sip-monitor/src/model"
+	"sip-monitor/src/pkg/env"
+	"sip-monitor/src/pkg/hep"
+	"sip-monitor/src/pkg/parser"
 )
 
 func HepServerListener() {

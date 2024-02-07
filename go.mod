@@ -1,4 +1,4 @@
-module sbc
+module sip-monitor
 
 go 1.21
 

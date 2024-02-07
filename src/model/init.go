@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"sbc/src/pkg/env"
+	"sip-monitor/src/pkg/env"
 
 	"go.mongodb.org/mongo-driver/bson"
 

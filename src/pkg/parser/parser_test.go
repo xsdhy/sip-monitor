@@ -1,8 +1,9 @@
 package parser
 
 import (
-	"sbc/src/entity"
 	"testing"
+
+	"sip-monitor/src/entity"
 
 	"github.com/stretchr/testify/assert"
 )

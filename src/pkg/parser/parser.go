@@ -1,9 +1,10 @@
 package parser
 
 import (
-	"sbc/src/entity"
-	"sbc/src/pkg/util"
 	"strings"
+
+	"sip-monitor/src/entity"
+	"sip-monitor/src/pkg/util"
 )
 
 var empty = struct{}{}

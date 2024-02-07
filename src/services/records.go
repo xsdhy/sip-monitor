@@ -1,9 +1,9 @@
 package services
 
 import (
-	"sbc/src/entity"
-	"sbc/src/model"
-	"sbc/src/pkg/util"
+	"sip-monitor/src/entity"
+	"sip-monitor/src/model"
+	"sip-monitor/src/pkg/util"
 
 	"github.com/gin-gonic/gin"
 )

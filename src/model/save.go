@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"log/slog"
 	"regexp"
-	"sbc/src/entity"
 	"time"
+
+	"sip-monitor/src/entity"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"

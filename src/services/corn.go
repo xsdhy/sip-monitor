@@ -1,9 +1,10 @@
 package services
 
 import (
-	"sbc/src/entity"
-	"sbc/src/model"
 	"time"
+
+	"sip-monitor/src/entity"
+	"sip-monitor/src/model"
 
 	"github.com/robfig/cron/v3"
 )

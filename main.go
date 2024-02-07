@@ -8,10 +8,11 @@ import (
 	"log/slog"
 	"net/http"
 	"path/filepath"
-	"sbc/src/model"
-	"sbc/src/pkg/env"
-	"sbc/src/services"
 	"strings"
+
+	"sip-monitor/src/model"
+	"sip-monitor/src/pkg/env"
+	"sip-monitor/src/services"
 
 	"github.com/gin-gonic/gin"
 )

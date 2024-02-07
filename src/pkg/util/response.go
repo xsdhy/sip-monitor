@@ -2,8 +2,9 @@ package util
 
 import (
 	"net/http"
-	"sbc/src/entity"
 	"time"
+
+	"sip-monitor/src/entity"
 
 	"github.com/gin-gonic/gin"
 )
