@@ -1,5 +1,5 @@
 import {CallRecordEntity} from '../../@types/entity'
-
+import dayjs from "dayjs";
 
 export function getProtocolName(num: number):string {
     if (num === 6) {return 'TCP'}
@@ -31,23 +31,33 @@ export function isRequest(method: string) {
 }
 
 
-//https://sequence.davidje13.com/library.htm
-export function createSeqHtml(seq: CallRecordEntity[]):string {
-    const res: string[] = [`autolabel "[<inc>] <label>"`]
+
+export function createSeqHtml(seq: CallRecordEntity[]): string {
+    const res: string[] = [
+        'sequenceDiagram'
+    ]
 
     seq.forEach((item, index) => {
         let dis = 0
         if (index !== 0) {
-            dis = seq[index].timestamp_micro/1000000 -seq[index - 1].timestamp_micro/1000000
+            dis = seq[index].timestamp_micro/1000000 - seq[index - 1].timestamp_micro/1000000
         }
-        //箭头:若是请求则->，否则-->
-        const arrowhead = `-${isRequest(item.sip_method) ? '' : '-'}>`
-        //内容
-        const labelContent = `**${item.sip_method}** ${item.response_desc} ${dis.toFixed(1)}s ${stringToColor(item.cseq_number + '')}`
+        
+        const arrow = isRequest(item.sip_method) ? '->>' : '-->>'
+        let messageText = `${item.sip_method} `
+        
+        if (item.sip_method === 'INVITE') {
+            messageText += `${item.from_user} -> ${item.to_user} `
+        }
+        messageText += `${item.response_desc} ${dis.toFixed(2)}s`
 
-        res.push(`${item.src_addr}${arrowhead}${item.dst_addr}: ${labelContent}`)
+        res.push(`${item.src_addr}${arrow}${item.dst_addr}: ${messageText}`)
+        
+        // 添加时间戳注释
+        if (index === 0 || dis > 1) {
+            res.push(`Note over ${item.src_addr}: ${dayjs(item.timestamp_micro/1000).format('YYYY-MM-DD HH:mm:ss')}`)
+        }
     })
 
-    res.push('terminators box')
     return res.join('\n')
 }

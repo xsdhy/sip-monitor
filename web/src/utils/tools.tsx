@@ -49,11 +49,11 @@ export function FormatToDateTime(t: string|undefined):string {
     return dayjs(t).format('YYYY-MM-DD HH:mm:ss')
 }
 
-export function OpenSeqModel(callId: string) {
+export function OpenSeqModel(callId: string, sessionId: string) {
     Modal.info({
-        title: callId,
+        title: "呼叫信令",
         icon: null,
-        content: (<SequenceModel callID={callId}/>),
+        content: (<SequenceModel callID={callId} sessionID={sessionId}/>),
         width: 800,
         closable: true,
         footer: null,

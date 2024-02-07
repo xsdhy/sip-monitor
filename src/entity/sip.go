@@ -4,50 +4,33 @@ import (
 	"time"
 )
 
-const (
-	HeaderCallID = "Call-ID"
-	HeaderFrom   = "From"
-	HeaderTo     = "To"
-	HeaderUA     = "User-Agent"
-	HeaderCSeq   = "CSeq"
-)
-
 type SIP struct {
-	NodeID   string
-	NodeName string
+	NodeID string `json:"node_id"`
+	NodeIP string `json:"node_ip"`
 
-	Title           string // Method or Status
-	IsRequest       bool
-	ResponseCode    int
-	ResponseDesc    string
-	CallID          string
-	RequestURL      string
-	RequestUsername string
-	RequestDomain   string
-	ToUsername      string
-	ToDomain        string
-	FromUsername    string
-	FromDomain      string
-	CSeqNumber      int
-	CSeqMethod      string
-	UserAgent       string
+	Protocol int `json:"protocol"`
 
-	SrcHost        string
-	SrcPort        int
-	SrcAddr        string
-	SrcCountryName string
-	SrcCityName    string
+	CallID    string `json:"sip_call_id"`
+	SessionID string `json:"session_id"`
 
-	DstHost        string
-	DstPort        int
-	DstAddr        string
-	DstCountryName string
-	DstCityName    string
+	Title        string `json:"sip_method"` // Method or Status
+	IsRequest    bool   `json:"is_request"`
+	ResponseCode int    `json:"response_code"`
+	ResponseDesc string `json:"response_desc"`
 
-	CreateAt       time.Time
-	TimestampMicro uint32
-	Protocol       int
-	UID            string  // correlative id for AB call leg
-	FSCallID       string  // freeswitch CallID
-	Raw            *string // raw sip message
+	CSeqNumber int    `json:"cseq_number"`
+	CSeqMethod string `json:"cseq_method"`
+
+	UserAgent string `json:"user_agent"`
+
+	FromUser string `json:"from_user"`
+	ToUser   string `json:"to_user"`
+
+	SrcAddr string `json:"src_addr"`
+	DstAddr string `json:"dst_addr"`
+
+	CreateTime     time.Time `json:"create_time"`
+	TimestampMicro int64     `json:"timestamp_micro"`
+
+	Raw *string `json:"raw"` // raw sip message
 }

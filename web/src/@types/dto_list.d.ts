@@ -5,16 +5,18 @@ export type CallRecordListDTO = {
     page_size?:number
 
     sip_call_id?: string
-    node_ip?: string
-    ua?: string
+    session_id?: string
+
 
     begin_time?: string
     end_time?: string
 
     from_user?: string
-    src_host?: string
     to_user?: string
+    src_host?: string
     dst_host?: string
+
+    hangup_code?: string
 
     date_picker?: [dayjs.Dayjs, dayjs.Dayjs]
 }

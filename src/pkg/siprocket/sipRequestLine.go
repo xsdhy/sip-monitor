@@ -22,7 +22,7 @@ type sipReq struct {
 
 func parseSipReq(v []byte, out *sipReq) {
 	pos := 0
-	state := 0
+	state := FIELD_NULL
 
 	// Init the output area
 	out.UriType = ""
@@ -39,24 +39,43 @@ func parseSipReq(v []byte, out *sipReq) {
 		out.Src = v
 	}
 
-	// Loop through the bytes making up the line
+	// 先检查是否为响应行 (SIP/2.0 开头)
+	if len(v) > 7 && getString(v, 0, 7) == "SIP/2.0" {
+		out.Method = []byte("SIP/2.0")
+
+		// 跳过 "SIP/2.0 " 找到状态码
+		pos = 8
+		for pos < len(v) && v[pos] != ' ' && v[pos] != '\r' && v[pos] != '\n' {
+			out.StatusCode = append(out.StatusCode, v[pos])
+			pos++
+		}
+
+		// 跳过空格，找到状态描述
+		if pos < len(v) && v[pos] == ' ' {
+			pos++
+			for pos < len(v) && v[pos] != '\r' && v[pos] != '\n' {
+				out.StatusDesc = append(out.StatusDesc, v[pos])
+				pos++
+			}
+		}
+
+		return
+	}
+
+	// 如果不是响应行，则处理请求行
 	for pos < len(v) {
 		// FSM
 		switch state {
 		case FIELD_NULL:
-			if v[pos] >= 'A' && v[pos] <= 'S' && pos == 0 {
+			// 请求行
+			if v[pos] >= 'A' && v[pos] <= 'Z' {
 				state = FIELD_METHOD
 				continue
 			}
 
 		case FIELD_METHOD:
-			if v[pos] == ' ' || pos > 9 {
-				if string(out.Method) == "SIP/2.0" {
-					state = FIELD_STATUS
-					out.Method = []byte{}
-				} else {
-					state = FIELD_BASE
-				}
+			if v[pos] == ' ' {
+				state = FIELD_BASE
 				pos++
 				continue
 			}
@@ -88,33 +107,15 @@ func parseSipReq(v []byte, out *sipReq) {
 					pos = pos + 5
 					continue
 				}
-				if v[pos] == '@' {
-					state = FIELD_HOST
-					out.User = out.Host // Move host to user
-					out.Host = nil      // Clear the host
-					pos++
-					continue
-				}
 			}
 		case FIELD_USER:
-			if v[pos] == ':' {
-				state = FIELD_PORT
-				pos++
-				continue
-			}
-			if v[pos] == ';' || v[pos] == '>' {
-				state = FIELD_BASE
-				pos++
-				continue
-			}
 			if v[pos] == '@' {
 				state = FIELD_HOST
-				out.User = out.Host // Move host to user
-				out.Host = nil      // Clear the host
 				pos++
 				continue
 			}
-			out.Host = append(out.Host, v[pos]) // Append to host for now
+			// 修复：在到达@之前的所有内容都添加到用户部分
+			out.User = append(out.User, v[pos])
 
 		case FIELD_HOST:
 			if v[pos] == ':' {
@@ -144,28 +145,6 @@ func parseSipReq(v []byte, out *sipReq) {
 				continue
 			}
 			out.UserType = append(out.UserType, v[pos])
-
-		case FIELD_STATUS:
-			if v[pos] == ';' || v[pos] == '>' {
-				state = FIELD_BASE
-				pos++
-				continue
-			}
-			if v[pos] == ' ' {
-				state = FIELD_STATUSDESC
-				pos++
-				continue
-			}
-			out.StatusCode = append(out.StatusCode, v[pos])
-
-		case FIELD_STATUSDESC:
-			if v[pos] == ';' || v[pos] == '>' {
-				state = FIELD_BASE
-				pos++
-				continue
-			}
-			out.StatusDesc = append(out.StatusDesc, v[pos])
-
 		}
 		pos++
 	}

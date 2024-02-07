@@ -20,7 +20,7 @@ const openNotificationWithIcon = (type:string, title:string, content:string) => 
 AppAxios.interceptors.request.use(config => {
     let token = window.localStorage.getItem("token");
     if (token) {
-        config.headers.token = token;
+        config.headers.Authorization = `Bearer ${token}`;
     }
     return config
 }, error => {

@@ -9,7 +9,7 @@ import type {ColumnsType} from "antd/es/table";
 import dayjs from "dayjs";
 import CommonPagination from "../../components/Pagination";
 import AppAxios from "../../utils/request";
-import {OpenSeqModel, ShowIPText} from "../../utils/tools";
+import {OpenSeqModel} from "../../utils/tools";
 
 function RecordCall() {
     const [calls, setCalls] = useState<SIPRecordCall[]>([])
@@ -27,7 +27,7 @@ function RecordCall() {
             title: '主叫',
             dataIndex: 'from_user',
             key: 'from_user',
-            width: 130,
+           
             ellipsis: true,
             fixed: 'left',
         },
@@ -35,7 +35,7 @@ function RecordCall() {
             title: '被叫',
             dataIndex: 'to_user',
             key: 'to_user',
-            width: 130,
+
             ellipsis: true,
             fixed: 'left',
         },
@@ -43,68 +43,52 @@ function RecordCall() {
         {
             title: '来源',
             dataIndex: 'src_host',
-            width: 200,
-            ellipsis: true,
-            render: (_, record) => {
-                return <div>{record.src_host}({ShowIPText(record.src_country_name, record.src_city_name)})</div>
-            },
-        },
-
-        {
-            title: '目标',
-            dataIndex: 'dst_host',
-            width: 200,
-            ellipsis: true,
-            render: (_, record) => {
-                return <div>{record.dst_host}({ShowIPText(record.dst_country_name, record.dst_city_name)})</div>
-            },
-        },
-        {
-            title: 'UA',
-            dataIndex: 'user_agent',
-            key: 'user_agent',
-            width: 130,
-            ellipsis: true,
-        },
-        {
-            title: '创建时间',
-            key: 'create_time',
             width: 180,
-            render: (_, record) => (
-                record.create_time ? dayjs(record.create_time).format('YYYY-MM-DD HH:mm:ss') : ""
-            ),
+            render: (_, record) => {
+                return <div>{record.src_addr}<br/>{record.dst_addr}</div>
+            },
         },
         {
-            title: '振铃时间',
+            title: '创建结束',
+            key: 'create_time',
+            width: 240,
+            render: (_, record) => {
+                return <div>
+                    {record.create_time ? "创建:"+dayjs(record.create_time).format('YYYY-MM-DD HH:mm:ss') : ""}
+                    <br/>
+                    {record.end_time ? "结束:"+dayjs(record.end_time).format('YYYY-MM-DD HH:mm:ss') : ""}
+                    
+                    </div>
+            },
+        },
+        {
+            title: '振铃应答',
             key: 'ringing_time',
-            width: 180,
-            render: (_, record) => (
-                record.ringing_time ? dayjs(record.ringing_time).format('YYYY-MM-DD HH:mm:ss') : ""
-            ),
+            width: 240,
+            render: (_, record) => {
+                return <div>
+                    {record.ringing_time ? "振铃:"+dayjs(record.ringing_time).format('YYYY-MM-DD HH:mm:ss') : ""}
+                    <br/>
+                    {record.answer_time ? "应答:"+dayjs(record.answer_time).format('YYYY-MM-DD HH:mm:ss') : ""}
+                    </div>
+            },
         },
         {
-            title: '应答时间',
-            key: 'answer_time',
-            width: 180,
-            render: (_, record) => (
-                record.answer_time ? dayjs(record.answer_time).format('YYYY-MM-DD HH:mm:ss') : ""
-            ),
-        },
-        {
-            title: '结束时间',
-            key: 'create_time',
-            width: 180,
-            render: (_, record) => (
-                record.end_time ? dayjs(record.end_time).format('YYYY-MM-DD HH:mm:ss') : ""
-            ),
+            title: 'Code',
+            dataIndex: 'hangup_code',
+            key: 'hangup_code',
+            render: (_, record) => {
+                return <div>{record.hangup_code}<br/>{record.hangup_cause}</div>
+            },
         },
         {
             title: 'CallID',
             dataIndex: 'sip_call_id',
             key: 'sip_call_id',
             fixed: 'right',
-            width: 100,
-            ellipsis: true,
+            render: (_, record) => {
+                return <div>CallID:{record.sip_call_id}<br/>SessionID:{record.session_id}</div>
+            },
         },
         {
             title: 'Action',
@@ -113,7 +97,7 @@ function RecordCall() {
             fixed: 'right',
             render: (_, record) => (
                 <Button type="link" onClick={() => {
-                    OpenSeqModel(record.sip_call_id)
+                    OpenSeqModel(record.sip_call_id, record.session_id)
                 }}>信令</Button>
             ),
         },

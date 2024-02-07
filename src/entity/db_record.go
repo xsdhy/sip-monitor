@@ -1,49 +1,33 @@
 package entity
 
-import (
-	"time"
-)
+import "time"
 
+// Record represents the original SIP signaling record
 type Record struct {
-	ID string `bson:"_id" json:"id"`
+	// ID field - primary key
+	ID int64 `gorm:"primaryKey;column:id;autoIncrement:true" bson:"_id" json:"id"`
 
-	NodeIP string `bson:"node_ip" json:"node_ip"`
+	// NodeIP represents the IP of the node that collected the signal
+	NodeIP string `gorm:"column:node_ip;index" bson:"node_ip" json:"node_ip"`
 
-	CreateTime time.Time `bson:"create_time" json:"create_time"`
+	// SIPCallID represents the unique call identifier from SIP protocol
+	SIPCallID string `gorm:"column:sip_call_id;index" bson:"sip_call_id" json:"sip_call_id"`
 
-	SIPCallID string `bson:"sip_call_id" json:"sip_call_id"`
-	SIPMethod string `bson:"sip_method" json:"sip_method"`
+	SessionID string `gorm:"column:session_id;index" bson:"session_id" json:"session_id"`
 
-	FsCallID string `bson:"fs_call_id" json:"fs_call_id"`
+	Method string `gorm:"column:method;index" bson:"method" json:"method"`
 
-	LegUid   string `bson:"leg_uid" json:"leg_uid"`
-	ToUser   string `bson:"to_user" json:"to_user"`
-	FromUser string `bson:"from_user" json:"from_user"`
+	SrcAddr string `gorm:"column:src_addr" bson:"src_addr" json:"src_addr"` // Source address
+	DstAddr string `gorm:"column:dst_addr" bson:"dst_addr" json:"dst_addr"` // Destination address
 
-	ResponseCode int    `bson:"response_code" json:"response_code"`
-	ResponseDesc string `bson:"response_desc" json:"response_desc"`
-	CSeqMethod   string `bson:"cseq_method" json:"cseq_method"`
-	CSeqNumber   int    `bson:"cseq_number" json:"cseq_number"`
+	// CreateTime represents when the record was created
+	CreateTime     time.Time `gorm:"column:create_time;index" bson:"create_time" json:"create_time"`
+	TimestampMicro int64     `gorm:"column:timestamp_micro" bson:"timestamp_micro" json:"timestamp_micro"`
 
-	FromHost string `bson:"from_host" json:"from_host"`
-	ToHost   string `bson:"to_host" json:"to_host"`
+	Raw string `gorm:"column:raw;type:text" bson:"raw" json:"raw"`
+}
 
-	SIPProtocol uint   `bson:"sip_protocol" json:"sip_protocol"`
-	UserAgent   string `bson:"user_agent" json:"user_agent"`
-
-	SrcHost        string `bson:"src_host" json:"src_host"`
-	SrcPort        int    `bson:"src_port" json:"src_port"`
-	SrcAddr        string `bson:"src_addr" json:"src_addr"`
-	SrcCountryName string `bson:"src_country_name" json:"src_country_name"`
-	SrcCityName    string `bson:"src_city_name" json:"src_city_name"`
-
-	DstHost        string `bson:"dst_host" json:"dst_host"`
-	DstPort        int    `bson:"dst_port" json:"dst_port"`
-	DstAddr        string `bson:"dst_addr" json:"dst_addr"`
-	DstCountryName string `bson:"dst_country_name" json:"dst_country_name"`
-	DstCityName    string `bson:"dst_city_name" json:"dst_city_name"`
-
-	TimestampMicro int64 `bson:"timestamp_micro" json:"timestamp_micro"`
-
-	RawMsg string `bson:"raw_msg" json:"raw_msg"`
+// TableName specifies the database table name for GORM
+func (Record) TableName() string {
+	return "call_records"
 }

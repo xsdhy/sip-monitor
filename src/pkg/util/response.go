@@ -2,8 +2,9 @@ package util
 
 import (
 	"net/http"
-	"sbc/src/entity"
 	"time"
+
+	"sip-monitor/src/entity"
 
 	"github.com/gin-gonic/gin"
 )
@@ -28,14 +29,30 @@ func SendSuccess(c *gin.Context) {
 	// always return http.StatusOK
 	c.JSON(http.StatusOK, entity.Response{Code: code, Msg: "ok", Data: nil, Time: nowTime})
 }
+
+func SendSuccessWithData(c *gin.Context, data interface{}) {
+	code, _ := DecodeErr(OK)
+	nowTime := time.Now()
+	// always return http.StatusOK
+	c.JSON(http.StatusOK, entity.Response{Code: code, Msg: "ok", Data: data, Time: nowTime})
+}
+
 func SendSuccessByMessage(c *gin.Context, msg string) {
 	code, _ := DecodeErr(OK)
 	nowTime := time.Now()
 	// always return http.StatusOK
 	c.JSON(http.StatusOK, entity.Response{Code: code, Msg: msg, Data: nil, Time: nowTime})
 }
+
 func SendMessage(c *gin.Context, message string) {
 	code, _ := DecodeErr(ErrAll)
+	nowTime := time.Now()
+	// always return http.StatusOK
+	c.JSON(http.StatusOK, entity.Response{Code: code, Msg: message, Data: nil, Time: nowTime})
+}
+
+func SendError(c *gin.Context, err error) {
+	code, message := DecodeErr(err)
 	nowTime := time.Now()
 	// always return http.StatusOK
 	c.JSON(http.StatusOK, entity.Response{Code: code, Msg: message, Data: nil, Time: nowTime})

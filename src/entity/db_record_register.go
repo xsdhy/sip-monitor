@@ -4,44 +4,36 @@ import (
 	"time"
 )
 
+// SIPRecordRegister represents a SIP registration record
 type SIPRecordRegister struct {
-	ID string `bson:"_id" json:"id"`
+	// ID field - primary key
+	ID int64 `gorm:"primaryKey;column:id;autoIncrement:true" bson:"_id" json:"id"`
 
-	NodeIP string `bson:"node_ip" json:"node_ip"`
+	// NodeIP represents the IP of the node that collected the signal
+	NodeIP string `gorm:"column:node_ip" bson:"node_ip" json:"node_ip"`
 
-	CreateTime time.Time `bson:"create_time" json:"create_time"`
+	// CreateTime represents when the registration record was created
+	CreateTime *time.Time `gorm:"column:create_time;index" bson:"create_time" json:"create_time"`
 
-	SIPCallID string `bson:"sip_call_id" json:"sip_call_id"`
+	// SIPCallID represents the unique call identifier from SIP protocol
+	SIPCallID string `gorm:"column:sip_call_id;index" bson:"sip_call_id" json:"sip_call_id"`
 
-	FromUser string `bson:"from_user" json:"from_user"`
+	// FromUser represents the user who is registering
+	FromUser string `gorm:"column:from_user;index" bson:"from_user" json:"from_user"`
 
-	UserAgent string `bson:"user_agent" json:"user_agent"`
+	// UserAgent represents the client software
+	UserAgent string `gorm:"column:user_agent" bson:"user_agent" json:"user_agent"`
 
-	RegisterTimes  int `bson:"register_times" json:"register_times"`   //注册次数
-	FailuresTimes  int `bson:"failures_times" json:"failures_times"`   //失败次数:返回401,403的次数
-	SuccessesTimes int `bson:"successes_times" json:"successes_times"` //成功次数:返回200的次数
+	// Registration statistics
+	RegisterTimes  int `gorm:"column:register_times" bson:"register_times" json:"register_times"`    // Number of registration attempts
+	FailuresTimes  int `gorm:"column:failures_times" bson:"failures_times" json:"failures_times"`    // Number of failures (401, 403 responses)
+	SuccessesTimes int `gorm:"column:successes_times" bson:"successes_times" json:"successes_times"` // Number of successful registrations (200 responses)
 
-	SrcHost        string `bson:"src_host" json:"src_host"`
-	SrcPort        int    `bson:"src_port" json:"src_port"`
-	SrcAddr        string `bson:"src_addr" json:"src_addr"`
-	SrcCountryName string `bson:"src_country_name" json:"src_country_name"`
-	SrcCityName    string `bson:"src_city_name" json:"src_city_name"`
+	// Source information
+	SrcAddr string `gorm:"column:src_addr" bson:"src_addr" json:"src_addr"`
 }
 
-type SIPRecordRegisterSaveDB struct {
-	NodeIP string `bson:"node_ip" json:"node_ip"`
-
-	CreateTime time.Time `bson:"create_time" json:"create_time"`
-
-	SIPCallID string `bson:"sip_call_id" json:"sip_call_id"`
-
-	FromUser string `bson:"from_user" json:"from_user"`
-
-	UserAgent string `bson:"user_agent" json:"user_agent"`
-
-	SrcHost        string `bson:"src_host" json:"src_host"`
-	SrcPort        int    `bson:"src_port" json:"src_port"`
-	SrcAddr        string `bson:"src_addr" json:"src_addr"`
-	SrcCountryName string `bson:"src_country_name" json:"src_country_name"`
-	SrcCityName    string `bson:"src_city_name" json:"src_city_name"`
+// TableName specifies the database table name for GORM
+func (SIPRecordRegister) TableName() string {
+	return "call_records_register"
 }

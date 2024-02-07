@@ -70,7 +70,7 @@ function RecordRegister() {
             width: 80,
             render: (_, record) => (
                 <Button type="link" onClick={() => {
-                    OpenSeqModel(record.sip_call_id)
+                    OpenSeqModel(record.sip_call_id, "")
                 }}>信令</Button>
             ),
         },
@@ -94,7 +94,10 @@ function RecordRegister() {
                 setListPageSize(res.data.meta.page_size)
                 setLoading(false)
             })
-            .catch()
+            .catch(err => {
+                console.log(err)
+                setLoading(false)
+            })
 
     }, [searchDTO, listPage, listPageSize])
 

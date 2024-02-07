@@ -2,8 +2,10 @@ package siprocket
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"sip-monitor/src/entity"
 	"strings"
 )
 
@@ -26,6 +28,8 @@ type SipMsg struct {
 
 	Sdp SdpMsg
 
+	SessionID string //自定义的Header头
+
 	Raw string
 }
 
@@ -44,6 +48,41 @@ func (s *sipVal) ToString() string {
 	return string(s.Value)
 }
 
+func ParseSIP(v []byte) (output *entity.SIP) {
+	parse := Parse(v)
+	if parse == nil {
+		return nil
+	}
+
+	output = &entity.SIP{
+		CallID:    string(parse.CallId.Value),
+		SessionID: parse.SessionID,
+
+		ResponseCode: BytesToInt(parse.Req.StatusCode),
+		ResponseDesc: string(parse.Req.StatusDesc),
+
+		ToUser:   string(parse.To.User),
+		FromUser: string(parse.From.User),
+
+		CSeqNumber: BytesToInt(parse.Cseq.Id),
+		CSeqMethod: string(parse.Cseq.Method),
+		UserAgent:  string(parse.Ua.Value),
+
+		Raw: &parse.Raw,
+	}
+
+	method := string(parse.Req.Method)
+	if method == "SIP/2.0" {
+		output.Title = string(parse.Req.StatusCode)
+		output.IsRequest = false
+	} else {
+		output.Title = string(parse.Req.Method)
+		output.IsRequest = true
+	}
+
+	return output
+}
+
 // Main parsing routine, passes by value
 func Parse(v []byte) (output *SipMsg) {
 	if len(v) <= 0 {
@@ -58,71 +97,99 @@ func Parse(v []byte) (output *SipMsg) {
 	attr_idx := 0
 	output.Sdp.Attrib = make([]sdpAttrib, 0, 8)
 
-	lines := bytes.Split(v, []byte("\r\n"))
+	// 分隔SIP头部和SDP内容
+	parts := bytes.SplitN(v, []byte("\r\n\r\n"), 2)
 
-	for i, line := range lines {
-		//fmt.Println(i, string(line))
-		line = bytes.TrimSpace(line)
-		if i == 0 {
-			// For the first line parse the request
-			parseSipReq(line, &output.Req)
-		} else {
-			// For subsequent lines split in sep (: for sip, = for sdp)
-			spos, stype := indexSep(line)
-			if spos > 0 && stype == ':' {
-				// SIP: Break up into header and value
-				lhdr := strings.ToLower(string(line[0:spos]))
-				lval := bytes.TrimSpace(line[spos+1:])
+	// 获取SIP头部部分
+	headerBytes := parts[0]
 
-				// Switch on the line header
-				//fmt.Println(i, string(lhdr), string(lval))
-				switch {
-				case lhdr == "f" || lhdr == "from":
-					parseSipFrom(lval, &output.From)
-				case lhdr == "t" || lhdr == "to":
-					parseSipTo(lval, &output.To)
-				case lhdr == "m" || lhdr == "contact":
-					parseSipContact(lval, &output.Contact)
-				case lhdr == "v" || lhdr == "via":
-					var tmpVia sipVia
-					output.Via = append(output.Via, tmpVia)
-					parseSipVia(lval, &output.Via[via_idx])
-					via_idx++
-				case lhdr == "i" || lhdr == "call-id":
-					output.CallId.Value = lval
-				case lhdr == "c" || lhdr == "content-type":
-					output.ContType.Value = lval
-				case lhdr == "content-length":
-					output.ContLen.Value = lval
-				case lhdr == "user-agent":
-					output.Ua.Value = lval
-				case lhdr == "expires":
-					output.Exp.Value = lval
-				case lhdr == "max-forwards":
-					output.MaxFwd.Value = lval
-				case lhdr == "cseq":
-					parseSipCseq(lval, &output.Cseq)
-				} // End of Switch
+	// 处理第一行（请求行或状态行）
+	firstLineEnd := bytes.Index(headerBytes, []byte("\r\n"))
+	if firstLineEnd == -1 {
+		// 如果没有换行符，整个消息就是请求行
+		firstLineEnd = len(headerBytes)
+	}
+
+	firstLine := headerBytes[:firstLineEnd]
+	parseSipReq(firstLine, &output.Req)
+
+	// 处理剩余的SIP头部
+	if firstLineEnd < len(headerBytes) {
+		headers := headerBytes[firstLineEnd+2:] // 跳过\r\n
+		headerLines := bytes.Split(headers, []byte("\r\n"))
+
+		for _, line := range headerLines {
+			if len(line) == 0 {
+				continue
 			}
-			if spos == 1 && stype == '=' {
-				// SDP: Break up into header and value
-				lhdr := strings.ToLower(string(line[0]))
-				lval := bytes.TrimSpace(line[2:])
-				// Switch on the line header
-				//fmt.Println(i, spos, string(lhdr), string(lval))
-				switch {
-				case lhdr == "m":
-					parseSdpMediaDesc(lval, &output.Sdp.MediaDesc)
-				case lhdr == "c":
-					parseSdpConnectionData(lval, &output.Sdp.ConnData)
-				case lhdr == "a":
-					var tmpAttrib sdpAttrib
-					output.Sdp.Attrib = append(output.Sdp.Attrib, tmpAttrib)
-					parseSdpAttrib(lval, &output.Sdp.Attrib[attr_idx])
-					attr_idx++
 
-				} // End of Switch
+			// 查找冒号分隔符
+			colonPos := bytes.Index(line, []byte(":"))
+			if colonPos == -1 {
+				continue // 跳过无效行
+			}
 
+			headerName := strings.ToLower(string(bytes.TrimSpace(line[:colonPos])))
+			headerVal := bytes.TrimSpace(line[colonPos+1:])
+
+			// 根据头部名称处理
+			switch headerName {
+			case "from", "f":
+				parseSipFrom(headerVal, &output.From)
+			case "to", "t":
+				parseSipTo(headerVal, &output.To)
+			case "via", "v":
+				var tmpVia sipVia
+				output.Via = append(output.Via, tmpVia)
+				parseSipVia(headerVal, &output.Via[via_idx])
+				via_idx++
+			case "contact", "m":
+				parseSipContact(headerVal, &output.Contact)
+			case "call-id", "i":
+				output.CallId.Value = headerVal
+			case "content-type", "c":
+				output.ContType.Value = headerVal
+			case "content-length":
+				output.ContLen.Value = headerVal
+			case "user-agent":
+				output.Ua.Value = headerVal
+			case "expires":
+				output.Exp.Value = headerVal
+			case "max-forwards":
+				output.MaxFwd.Value = headerVal
+			case "cseq":
+				parseSipCseq(headerVal, &output.Cseq)
+			case "x-jcallid":
+				output.SessionID = string(headerVal)
+			}
+		}
+	}
+
+	// 处理SDP内容（如果存在）
+	if len(parts) > 1 && len(parts[1]) > 0 {
+		sdpContent := parts[1]
+		sdpLines := bytes.Split(sdpContent, []byte("\r\n"))
+
+		for _, line := range sdpLines {
+			line = bytes.TrimSpace(line)
+			if len(line) < 2 || line[1] != '=' {
+				continue // 无效SDP行
+			}
+
+			// SDP行格式为 x=value
+			sdpType := line[0]
+			sdpValue := bytes.TrimSpace(line[2:])
+
+			switch sdpType {
+			case 'm':
+				parseSdpMediaDesc(sdpValue, &output.Sdp.MediaDesc)
+			case 'c':
+				parseSdpConnectionData(sdpValue, &output.Sdp.ConnData)
+			case 'a':
+				var tmpAttrib sdpAttrib
+				output.Sdp.Attrib = append(output.Sdp.Attrib, tmpAttrib)
+				parseSdpAttrib(sdpValue, &output.Sdp.Attrib[attr_idx])
+				attr_idx++
 			}
 		}
 	}
@@ -301,6 +368,42 @@ func (data *SipMsg) ToJson() string {
 		return ""
 	}
 	return string(marshal)
+}
+
+func BytesToInt(bys []byte) int {
+	if bys == nil {
+		return 0
+	}
+
+	// 尝试将字节解析为字符串数字
+	str := string(bys)
+	var i int
+	if _, err := fmt.Sscanf(str, "%d", &i); err == nil {
+		return i
+	}
+
+	// 如果不是字符串数字，尝试二进制读取
+	var data int64
+	_ = binary.Read(bytes.NewBuffer(bys), binary.BigEndian, &data)
+	return int(data)
+}
+
+func BytesToInt64(bys []byte) int64 {
+	if bys == nil {
+		return 0
+	}
+
+	// 尝试将字节解析为字符串数字
+	str := string(bys)
+	var i int64
+	if _, err := fmt.Sscanf(str, "%d", &i); err == nil {
+		return i
+	}
+
+	// 如果不是字符串数字，尝试二进制读取
+	var data int64
+	_ = binary.Read(bytes.NewBuffer(bys), binary.BigEndian, &data)
+	return data
 }
 
 const FIELD_NULL = 0

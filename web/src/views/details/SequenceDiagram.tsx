@@ -1,9 +1,8 @@
 import {useEffect, useRef, useState} from 'react'
 import {Tag, Spin, Modal, Empty} from 'antd'
-import './Sequence.css'
 
 
-import * as ssd from 'svg-sequence-diagram'
+import mermaid from 'mermaid'
 import {createSeqHtml, getProtocolName} from './util'
 import {CallRecordDetailsVO, CallRecordEntity} from '../../@types/entity'
 import AppAxios from "../../utils/request";
@@ -36,28 +35,69 @@ export default function SequenceDiagram(p: Prop) {
     }
 
     useEffect(() => {
-        const diagram = new ssd.SequenceDiagram()
-        const dom = createSeqHtml(seq)
+        if (seq.length > 0 && ssdRef.current) {
+            // 初始化 mermaid
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: 'default',
+                sequence: {
+                    diagramMarginX: 50,
+                    diagramMarginY: 10,
+                    actorMargin: 50,
+                    width: 150,
+                    height: 65,
+                    boxMargin: 10,
+                    boxTextMargin: 5,
+                    noteMargin: 10,
+                    messageMargin: 35
+                }
+            })
 
-        diagram.set(dom)
-        diagram.addEventListener('click', (e: any) => {
-            if (e.type === 'connect') {
-                diagram.setHighlight(e.ln)
-                setSeqMessageItem(seq[e.ln-1])
-                setSeqMessageItemModelShow(true)
-            }
-        })
+            // 清除之前的内容
+            ssdRef.current.innerHTML = ''
+            
+            // 创建新的图表容器
+            const container = document.createElement('div')
+            container.className = 'mermaid'
+            container.innerHTML = createSeqHtml(seq)
+            ssdRef.current.appendChild(container)
+            
+            // 渲染图表
+            mermaid.initialize({
+                theme: 'base',
+                sequence: { showSequenceNumbers: true }
+            })
+            mermaid.run({querySelector: '.mermaid'})
 
-        if (ssdRef.current !== null) {
-            ssdRef.current.appendChild(diagram.dom())
+            // 添加点击事件
+            container.addEventListener('click', (e) => {
+                const target = e.target as HTMLElement
+                // 查找最近的 text 元素
+                const textElement = target.closest('text');
+                if (textElement) {
+                    const messageText = textElement.textContent || '';
+                    // 在序列中查找对应的消息
+                    const messageIndex = seq.findIndex((item, index) => {
+                        const expectedText = `${item.sip_method} `;
+                        if (item.sip_method === 'INVITE') {
+                            return messageText.includes(`${item.sip_method} ${item.from_user} -> ${item.to_user}`);
+                        }
+                        return messageText.includes(expectedText);
+                    });
+                    
+                    if (messageIndex !== -1) {
+                        setSeqMessageItem(seq[messageIndex]);
+                        setSeqMessageItemModelShow(true);
+                    }
+                }
+            });
         }
 
-        //组件卸载时执行的清理逻辑
         return () => {
-            diagram.removeAllEventListeners()
-            if (ssdRef.current) ssdRef.current.innerHTML = ''
+            if (ssdRef.current) {
+                ssdRef.current.innerHTML = ''
+            }
         }
-
     }, [seq])
 
     useEffect(() => {
@@ -87,15 +127,15 @@ export default function SequenceDiagram(p: Prop) {
                     onOk={() => {
                         setSeqMessageItemModelShow(false)
                     }}
-                    key={seqMessageItem?.id}
+                    key={seqMessageItem?.sip_call_id}
                     title={`${seqMessageItem?.sip_method} ${FormatToDateTime(seqMessageItem?.create_time)}`}>
                     <p>
                         <Tag color="blue">{dayjs(seqMessageItem?.create_time).format('YYYY-MM-DD HH:mm:ss')}</Tag>
                         <Tag color="cyan">{getProtocolName(seqMessageItem?.sip_protocol ? seqMessageItem?.sip_protocol : 0)}</Tag>
-                        <Tag color="magenta">length: {seqMessageItem?.raw_msg.length}B</Tag>
+                        <Tag color="magenta">length: {seqMessageItem?.raw.length}B</Tag>
                     </p>
                     <div>
-                        <pre style={{overflowX: 'scroll'}}>{seqMessageItem?.raw_msg}</pre>
+                        <pre style={{overflowX: 'scroll'}}>{seqMessageItem?.raw}</pre>
                     </div>
                 </Modal>
             </Spin>

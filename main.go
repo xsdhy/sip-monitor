@@ -1,55 +1,102 @@
 package main
 
 import (
+	"context"
 	"embed"
-	"flag"
 	"fmt"
 	"io/fs"
-	"log/slog"
 	"net/http"
 	"path/filepath"
-	"sbc/src/model"
-	"sbc/src/pkg/env"
-	"sbc/src/services"
+	"time"
+
+	"sip-monitor/src/config"
+	"sip-monitor/src/model"
+
 	"strings"
 
+	"sip-monitor/src/services"
+
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 //go:embed web/build
 var dist embed.FS
 
 func main() {
-	if env.Conf.DSNURL == "" {
-		flag.StringVar(&env.Conf.DSNURL, "dsn", "", "dsn")
-		flag.Parse()
+	// 初始化配置
+	cfg, err := config.ParseConfig()
+	if err != nil {
+		logrus.WithError(err).Error("Failed to parse config")
+		return
 	}
 
-	//初始化数据库
-	model.MongoDBInit()
-	//初始化IP库
-	services.IPDBInit()
-	//启动HepServer
-	go services.HepServerListener()
-	//启动定时任务
-	go services.Cron()
+	logger := logrus.New()
 
+	// 初始化数据库
+	repository, err := model.InitRepository(&cfg)
+	if err != nil {
+		logrus.WithError(err).Error("Failed to create repository")
+		return
+	}
+	repository.CreateDefaultAdminUser(context.Background())
+
+	// 初始化保存服务
+	saveService := services.NewSaveService(logger, repository)
+
+	//启动HepServer
+	hepServer, err := services.NewHepServer(logger, &cfg, saveService)
+	if err != nil {
+		logrus.WithError(err).Error("Failed to create hep server")
+		return
+	}
+	go hepServer.Start()
+
+	// 初始化认证服务
+	authService := services.NewAuthService(logger, repository, cfg.JWTSecret, time.Duration(cfg.JWTExpiryHours)*time.Hour)
+	authHandler := services.NewAuthHandler(logger, authService)
+	authMiddleware := services.NewAuthMiddleware(logger, authService)
+
+	// 启动HTTP Handle
+	handleHttp := services.NewHandleHttp(logger, &cfg, repository)
+
+	// 初始化gin
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
-	//后端接口
-	r.GET("/api/record/all", services.SearchAll)
-	r.GET("/api/record/call", services.RecordCallList)
-	r.GET("/api/record/register", services.RecordRegisterList)
-	r.GET("/api/record/details", services.SearchCallID)
-	r.GET("/api/system/db/clean_sip_record", services.CleanSipRecord)
-	r.GET("/api/system/db/stats", services.DbStats)
+
+	// 公开的API路由组
+	public := r.Group("/api")
+	public.POST("/login", authHandler.Login)
+
+	// 需要认证的API路由组
+	authorized := r.Group("/api")
+	authorized.Use(authMiddleware.JWT())
+
+	// 用户相关API
+	authorized.GET("/user/current", authHandler.GetCurrentUser)
+	authorized.POST("/user/update", authHandler.UpdateUserInfo)
+	authorized.POST("/user/password", authHandler.UpdatePassword)
+
+	// 记录相关API
+	authorized.GET("/record/call", handleHttp.RecordCallList)
+	authorized.GET("/record/register", handleHttp.RecordRegisterList)
+	authorized.GET("/record/details", handleHttp.SearchCallID)
+
+	// 用户管理API
+	authorized.GET("/users", handleHttp.UserList)
+	authorized.GET("/users/:id", handleHttp.GetUser)
+	authorized.POST("/users", handleHttp.CreateUser)
+	authorized.PUT("/users/:id", handleHttp.UpdateUser)
+	authorized.DELETE("/users/:id", handleHttp.DeleteUser)
+
 	//前端资源
 	r.Use(ServerStatic("web/build", dist))
-	serverHost := fmt.Sprintf("0.0.0.0:%d", env.Conf.HTTPListenPort)
-	slog.Info("HttpServerInit", slog.String("host", serverHost))
-	err := r.Run(serverHost)
+
+	serverHost := fmt.Sprintf("0.0.0.0:%d", cfg.HTTPListenPort)
+	logrus.WithField("host", serverHost).Info("HttpServerInit")
+	err = r.Run(serverHost)
 	if err != nil {
-		slog.Error("HttpServerInit Error", err)
+		logrus.WithError(err).Error("HttpServerInit Error")
 	}
 }
 

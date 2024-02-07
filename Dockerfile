@@ -1,10 +1,12 @@
 FROM node:20.0 as web
 
+ARG npm_registry
+
 WORKDIR /app
 COPY ./web .
-RUN npm install && npm run build
+RUN npm install --registry=${npm_registry} && npm run build
 
-FROM golang:1.21 as golang
+FROM golang:1.24 as golang
 
 WORKDIR /app
 COPY . .
@@ -14,7 +16,6 @@ RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o sbc
 FROM alpine:latest
 
 WORKDIR /app
-COPY ./ipv4.ipdb .
 COPY --from=golang /app/sbc .
 
 

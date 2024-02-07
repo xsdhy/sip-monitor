@@ -24,34 +24,30 @@ export interface CallRecordEntity {
     id: number
     sip_call_id: string
     sip_method: string
-    create_time: string
-    create_time_short?: string
-    create_time_long?: string
+   
+
     to_user: string
-    leg_uid: string
+
     from_user: string
-    fs_call_id: string
+
     response_code: number
     response_desc: string
     cseq_method: string
     cseq_number: number
-    from_host: string
-    to_host: string
+
+
     sip_protocol: number
     sip_protocol_name?: string
+
     is_request?: number
     user_agent: string
-    src_addr: string
-    src_host: string
-    src_city_name: string
-    src_country_name: string
-    dst_addr: string
-    dst_host: string
-    dst_country_name: string
-    dst_city_name: string
-    timestamp_micro: number
-    raw_msg: string
 
+    src_addr: string
+    dst_addr: string
+
+    create_time: string
+    timestamp_micro: number
+    raw: string
 }
 
 
@@ -60,23 +56,16 @@ export interface SIPRecordCall {
 
     node_ip: string;
     sip_call_id: string;
+    session_id: string;
 
     to_user: string;
     from_user: string;
 
     user_agent: string;
 
-    src_host: string;
-    src_port: number;
-    src_addr: string;
-    src_country_name: string;
-    src_city_name: string;
 
-    dst_host: string;
-    dst_port: number;
+    src_addr: string;
     dst_addr: string;
-    dst_country_name: string;
-    dst_city_name: string;
 
     create_time: string; // Assuming time.Time is serialized as a string
     ringing_time: string; // Assuming time.Time is serialized as a string
@@ -86,6 +75,9 @@ export interface SIPRecordCall {
     call_duration: number;
     ringing_duration: number;
     talk_duration: number;
+
+    hangup_code: number;
+    hangup_cause: string;
 }
 
 

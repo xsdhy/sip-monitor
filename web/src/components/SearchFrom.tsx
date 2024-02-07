@@ -1,8 +1,9 @@
-import {Button, Form, Input, DatePicker, Space, Flex, Row} from 'antd'
+import {Button, Form, Input, DatePicker, Space, Row, Col, Divider} from 'antd'
 import {CallRecordListDTO} from '../@types/dto_list'
-import React from "react";
+import React, { useState } from "react";
 import {RangeValueType, ValueDate} from "../@types/base.t";
 import dayjs, {Dayjs} from "dayjs";
+import { SearchOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
 
 const {RangePicker} = DatePicker;
 const FormatDatetime = "YYYY-MM-DD HH:mm:ss"
@@ -18,68 +19,131 @@ const TimePresets: ValueDate<RangeValueType<Dayjs>>[] = [
     {label: '本月', value: [dayjs().startOf('month'), dayjs().endOf('month')]},
 ]
 
+const SelectConvOptions=[{ value: 'eq', label: '等于' },{ value: 'neq', label: '不等于' }]
+
 interface Prop {
     search: (ft: CallRecordListDTO) => void
 }
 
 export function SearchForm(p: Prop) {
     const [form] = Form.useForm();
-
-    const formStyle: React.CSSProperties = {
-        maxWidth: 'none',
-        paddingLeft: 10,
-    };
-    const formItemStyle: React.CSSProperties = {
-        marginRight: 10,
-    };
-
+    const [expand, setExpand] = useState(false);
 
     const onFinish = (ft: CallRecordListDTO) => {
         if (ft.date_picker) {
             ft.begin_time = ft.date_picker[0].format('YYYY-MM-DD') + ' ' + ft.date_picker[0].format('HH:mm:ss')
             ft.end_time = ft.date_picker[1].format('YYYY-MM-DD') + ' ' + ft.date_picker[1].format('HH:mm:ss')
         }
+        console.log(ft)
         p.search(ft)
     }
-
 
     const onReset = () => {
         form.resetFields();
         form.submit();
     };
 
+    const toggleExpand = () => {
+        setExpand(!expand);
+    };
+
     return (
-        <Form
-            form={form}
-            name="basic"
-            style={formStyle}
-            labelAlign="left"
-            onFinish={onFinish}
-            autoComplete="off"
-        >
-            <Row gutter={24}>
-                <Form.Item<CallRecordListDTO> style={formItemStyle} label="CALL_ID" name="sip_call_id"><Input allowClear/></Form.Item>
-                <Form.Item<CallRecordListDTO> style={formItemStyle} label="节点IP" name="node_ip"><Input allowClear/></Form.Item>
-                <Form.Item<CallRecordListDTO> style={formItemStyle} label="UA" name="ua"><Input allowClear/></Form.Item>
-                <Form.Item<CallRecordListDTO> style={formItemStyle} label="主叫" name="from_user"><Input allowClear/></Form.Item>
-                <Form.Item<CallRecordListDTO> style={formItemStyle} label="来源IP" name="src_host"><Input allowClear/></Form.Item>
-                <Form.Item<CallRecordListDTO> style={formItemStyle} label="被叫" name="to_user"><Input allowClear/></Form.Item>
-                <Form.Item<CallRecordListDTO> style={formItemStyle} label="目标IP" name="dst_host"><Input allowClear/></Form.Item>
-                <Form.Item<CallRecordListDTO> style={formItemStyle} label="时间" name="date_picker">
-                    <RangePicker
-                        showTime={{format: FormatTime}}
-                        presets={TimePresets}
-                        placeholder={["开始时间", "结束时间"]}
-                        format={FormatDatetime}
-                    />
-                </Form.Item>
-            </Row>
-            <div style={{textAlign: 'right'}}>
-                <Space size="small">
-                    <Button type="primary" htmlType="submit">搜索</Button>
-                    <Button type="default" htmlType="button" onClick={onReset}>重置</Button>
-                </Space>
-            </div>
-        </Form>
+        <div style={{ 
+            background: 'transparent', 
+            padding: '16px 0',
+            marginBottom: '12px'
+        }}>
+            <Form
+                form={form}
+                name="search_form"
+                onFinish={onFinish}
+                autoComplete="off"
+                layout="horizontal"
+            >
+                <Row gutter={[16, 0]}>
+                    <Col span={6}>
+                        <Form.Item<CallRecordListDTO> name="sip_call_id" style={{ marginBottom: 8 }}>
+                            <Input placeholder="CALL_ID" allowClear style={{ borderRadius: '4px' }}/>
+                        </Form.Item>
+                    </Col>
+                    <Col span={6}>
+                        <Form.Item<CallRecordListDTO> name="session_id" style={{ marginBottom: 8 }}>
+                            <Input placeholder="SessionID" allowClear style={{ borderRadius: '4px' }}/>
+                        </Form.Item>
+                    </Col>
+                    <Col span={6}>
+                        <Form.Item<CallRecordListDTO> name="date_picker" style={{ marginBottom: 8 }}>
+                            <RangePicker
+                                showTime={{format: FormatTime}}
+                                presets={TimePresets}
+                                placeholder={["开始时间", "结束时间"]}
+                                format={FormatDatetime}
+                                style={{ width: '100%', borderRadius: '4px' }}
+                            />
+                        </Form.Item>
+                    </Col>
+                    <Col span={6} style={{ textAlign: 'right' }}>
+                        <Space>
+                            <Button 
+                                type="primary" 
+                                htmlType="submit" 
+                                icon={<SearchOutlined />}
+                                style={{ borderRadius: '4px' }}
+                            >
+                                搜索
+                            </Button>
+                            <Button 
+                                onClick={onReset}
+                                style={{ borderRadius: '4px' }}
+                            >
+                                重置
+                            </Button>
+                            <Button 
+                                type="link" 
+                                onClick={toggleExpand}
+                                icon={expand ? <UpOutlined /> : <DownOutlined />}
+                            >
+                                {expand ? '收起' : '展开'}
+                            </Button>
+                        </Space>
+                    </Col>
+                </Row>
+                
+                {expand && (
+                    <>
+                        <Divider style={{ margin: '12px 0' }} />
+                        <Row gutter={[16, 0]}>
+                            <Col span={6}>
+                                <Form.Item<CallRecordListDTO> name="from_user" style={{ marginBottom: 8 }}>
+                                    <Input placeholder="主叫号码" allowClear style={{ borderRadius: '4px' }}/>
+                                </Form.Item>
+                            </Col>
+                            <Col span={6}>
+                                <Form.Item<CallRecordListDTO> name="to_user" style={{ marginBottom: 8 }}>
+                                    <Input placeholder="被叫号码" allowClear style={{ borderRadius: '4px' }}/>
+                                </Form.Item>
+                            </Col>
+                            <Col span={6}>
+                                <Form.Item<CallRecordListDTO> name="src_host" style={{ marginBottom: 8 }}>
+                                    <Input placeholder="来源IP" allowClear style={{ borderRadius: '4px' }}/>
+                                </Form.Item>
+                            </Col>
+                            <Col span={6}>
+                                <Form.Item<CallRecordListDTO> name="dst_host" style={{ marginBottom: 8 }}>
+                                    <Input placeholder="目标IP" allowClear style={{ borderRadius: '4px' }}/>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                        <Row gutter={[16, 0]}>
+                            <Col span={6}>
+                                <Form.Item<CallRecordListDTO> name="hangup_code" style={{ marginBottom: 8 }}>
+                                    <Input placeholder="挂断代码" allowClear style={{ borderRadius: '4px' }}/>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </>
+                )}
+            </Form>
+        </div>
     )
 }

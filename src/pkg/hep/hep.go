@@ -9,7 +9,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"net"
-	"sbc/src/pkg/siprocket"
 )
 
 /*************************************
@@ -103,8 +102,6 @@ type HepMsg struct {
 	KeepAliveTimer        uint16
 	AuthenticateKey       string
 	Body                  []byte
-	SipMsg                *siprocket.SipMsg
-	//SipMsg	*sip.SipMsg
 }
 
 // NewHepMsg returns a parsed message object. Takes a byte slice.
@@ -117,8 +114,25 @@ func NewHepMsg(packet []byte) (*HepMsg, error) {
 	return newHepMsg, nil
 }
 
-func (hepMsg *HepMsg) parse(udpPacket []byte) error {
+func NewMockHepMsgBySIPMsg(sipBody []byte) *HepMsg {
+	return &HepMsg{
+		IPProtocolFamily:      0x01,
+		IPProtocolID:          0x01,
+		IP4SourceAddress:      "127.0.0.1",
+		IP4DestinationAddress: "127.0.0.1",
+		SourcePort:            5060,
+		DestinationPort:       5060,
+		Timestamp:             0,
+		TimestampMicro:        0,
+		ProtocolType:          0x01,
+		CaptureAgentID:        0x01,
+		KeepAliveTimer:        0x01,
+		AuthenticateKey:       "1234567890",
+		Body:                  sipBody,
+	}
+}
 
+func (hepMsg *HepMsg) parse(udpPacket []byte) error {
 	switch udpPacket[0] {
 	case 0x01:
 		return hepMsg.parseHep1(udpPacket)
@@ -143,8 +157,7 @@ func (hepMsg *HepMsg) parseHep1(udpPacket []byte) error {
 	hepMsg.IP4DestinationAddress = net.IP(udpPacket[12:16]).String()
 	hepMsg.Body = udpPacket[16:]
 	if len(udpPacket[16:packetLength-4]) > 1 {
-		hepMsg.SipMsg = siprocket.Parse(udpPacket[16:packetLength])
-
+		//SIP消息：udpPacket[16:packetLength]
 	} else {
 
 	}
@@ -167,7 +180,7 @@ func (hepMsg *HepMsg) parseHep2(udpPacket []byte) error {
 	hepMsg.CaptureAgentID = binary.BigEndian.Uint16(udpPacket[24:26])
 	hepMsg.Body = udpPacket[28:]
 	if len(udpPacket[28:packetLength-4]) > 1 {
-		hepMsg.SipMsg = siprocket.Parse(udpPacket[16:packetLength])
+		//SIP消息：udpPacket[16:packetLength]
 	} else {
 
 	}
@@ -184,6 +197,12 @@ func (hepMsg *HepMsg) parseHep3(udpPacket []byte) error {
 		//chunkVendorId := binary.BigEndian.Uint16(hepChunk[:2])
 		chunkType := binary.BigEndian.Uint16(hepChunk[2:4])
 		chunkLength := binary.BigEndian.Uint16(hepChunk[4:6])
+
+		//todo::实际运行过程中，chunkLength会超过len(hepChunk)，导致下面报错
+		if int(chunkLength) > len(hepChunk) {
+			continue
+		}
+
 		chunkBody := hepChunk[6:chunkLength]
 
 		switch chunkType {
