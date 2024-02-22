@@ -14,7 +14,6 @@ RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o sbc
 FROM alpine:latest
 
 WORKDIR /app
-COPY ./ipv4.ipdb .
 COPY --from=golang /app/sbc .
 
 

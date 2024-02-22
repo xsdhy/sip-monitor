@@ -72,7 +72,7 @@ func ParseSaveNew(b []byte, ip net.IP) *entity.Record {
 	}
 
 	if msg.SipMsg == nil {
-		slog.Warn("消息题为空", slog.String("ip", ip.String()), slog.Any("IPProtocolID", string(msg.IPProtocolID)))
+		slog.Warn("消息体为空", slog.String("ip", ip.String()), slog.Any("IPProtocolID", string(msg.IPProtocolID)))
 		return nil
 	}
 	ua := msg.SipMsg.Ua.ToString()
@@ -106,12 +106,12 @@ func ParseSaveNew(b []byte, ip net.IP) *entity.Record {
 	item.SrcAddr = fmt.Sprintf("%s_%d", msg.SipMsg.From.Host, msg.SipMsg.From.Port)
 	item.SrcHost = string(msg.SipMsg.From.Host)
 	item.SrcPort = BytesToInt(msg.SipMsg.From.Port)
-	item.SrcCountryName, item.SrcCityName = GetIPArea(item.SrcHost)
+	item.SrcCountryName, item.SrcCityName, _ = GetIPArea(item.SrcHost)
 
 	item.DstAddr = fmt.Sprintf("%s_%d", msg.SipMsg.To.Host, msg.SipMsg.To.Port)
 	item.DstHost = string(msg.SipMsg.From.Host)
 	item.DstPort = BytesToInt(msg.SipMsg.From.Port)
-	item.DstCountryName, item.DstCityName = GetIPArea(item.SrcHost)
+	item.DstCountryName, item.DstCityName, _ = GetIPArea(item.SrcHost)
 
 	//model.Save(item,len(msg.SipMsg.Via))
 	return &item
@@ -244,12 +244,12 @@ func Format(p []byte) (s *entity.SIP, errorType string, errMsg string) {
 	sip.SrcAddr = fmt.Sprintf("%s_%d", hepMsg.IP4SourceAddress, hepMsg.SourcePort)
 	sip.SrcPort = int(hepMsg.SourcePort)
 	sip.SrcHost = hepMsg.IP4SourceAddress
-	sip.SrcCountryName, sip.SrcCityName = GetIPArea(hepMsg.IP4SourceAddress)
+	sip.SrcCountryName, sip.SrcCityName, _ = GetIPArea(hepMsg.IP4SourceAddress)
 
 	sip.DstAddr = fmt.Sprintf("%s_%d", hepMsg.IP4DestinationAddress, hepMsg.DestinationPort)
 	sip.DstHost = hepMsg.IP4DestinationAddress
 	sip.DstPort = int(hepMsg.DestinationPort)
-	sip.DstCountryName, sip.DstCityName = GetIPArea(hepMsg.IP4DestinationAddress)
+	sip.DstCountryName, sip.DstCityName, _ = GetIPArea(hepMsg.IP4DestinationAddress)
 
 	sip.NodeID = strconv.Itoa(int(hepMsg.CaptureAgentID))
 

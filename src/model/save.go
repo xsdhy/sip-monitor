@@ -143,7 +143,7 @@ func Save(item entity.Record, viaNum int) {
 				upsertSIPRecordCallTime(item.SIPCallID, "end_time", item.CreateTime)
 			}
 			break
-		case "CANCEL", "480":
+		case "CANCEL", "480", "487", "500":
 			upsertSIPRecordCallTime(item.SIPCallID, "end_time", item.CreateTime)
 			break
 		case "100", "ACK", "BYE":

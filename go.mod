@@ -6,8 +6,10 @@ require (
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/ipipdotnet/ipdb-go v1.3.3
+	github.com/pupuk/addr v0.0.3
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/stretchr/testify v1.8.3
+	github.com/xiaoqidun/qqwry v0.0.0-20231114063655-1b27c45e2a76
 	go.mongodb.org/mongo-driver v1.13.1
 )
 
@@ -43,7 +45,7 @@ require (
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
 	golang.org/x/sys v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
