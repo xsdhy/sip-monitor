@@ -1,8 +1,10 @@
 FROM node:20.0 as web
 
+ARG npm_registry
+
 WORKDIR /app
 COPY ./web .
-RUN npm install && npm run build
+RUN npm install --registry=${npm_registry} && npm run build
 
 FROM golang:1.21 as golang
 

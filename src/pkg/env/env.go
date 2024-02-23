@@ -20,8 +20,11 @@ type config struct {
 	DiscardMethods  string `env:"DiscardMethods" envDefault:"OPTIONS"`
 	MinPacketLength int    `env:"MinPacketLength" envDefault:"24"`
 
-	DSNURL string `env:"DSN_URL" envDefault:""`
-	DBName string `env:"DBName" envDefault:"call_sbc"`
+	DSNURL     string `env:"DSN_URL" envDefault:""`
+	DBUser     string `env:"DBUser" envDefault:""`
+	DBPassword string `env:"DBPassword" envDefault:""`
+	DBAddr     string `env:"DBAddr" envDefault:""`
+	DBName     string `env:"DBName" envDefault:"call_sbc"`
 }
 
 var Conf = config{}

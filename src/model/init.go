@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -23,10 +24,16 @@ func MongoDBInit() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	slog.Info("MongoDBInit", slog.Bool("dsn", len(env.Conf.DSNURL) > 0))
+	if env.Conf.DSNURL == "" {
+		slog.Info("MongoDBInit BY DBUser、DBPassword、DBAddr")
+		env.Conf.DSNURL = fmt.Sprintf("mongodb://%s:%s@%s", env.Conf.DBUser, env.Conf.DBPassword, env.Conf.DBAddr)
+	} else {
+		slog.Info("MongoDBInit BY DSN_URL")
+	}
+
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(env.Conf.DSNURL))
 	if err != nil {
-		slog.Error("MongoDBInit Error", err.Error())
+		slog.Error("MongoDBInit Error", slog.String("err:", err.Error()))
 		return
 	}
 
