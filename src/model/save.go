@@ -161,7 +161,7 @@ func Save(item entity.Record, viaNum int) {
 		slog.Error("Save Item Sip Message Error:", err.Error())
 		return
 	}
-	slog.Info("Save Item", slog.String("msg", fmt.Sprintf("%s(%s) %s->%s", item.CSeqMethod, item.SIPCallID, item.FromUser+item.FromHost, item.ToUser+item.ToHost)))
+	slog.Debug("Save Item", slog.String("msg", fmt.Sprintf("%s(%s) %s->%s", item.CSeqMethod, item.SIPCallID, item.FromUser+item.FromHost, item.ToUser+item.ToHost)))
 }
 
 func GetMd5(uuid string, content string, ip string) string {

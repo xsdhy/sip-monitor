@@ -10,6 +10,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+const (
+	MgWhereNotContain string = "^((?!%s).)*$"
+	MgWhereContain    string = "^.*%s.*$"
+)
+
 func GetSearchFilter(sp entity.SearchParams) bson.M {
 	filter := bson.M{}
 	if sp.BeginTime != nil && sp.EndTime != nil {
@@ -25,21 +30,77 @@ func GetSearchFilter(sp entity.SearchParams) bson.M {
 	if sp.SipCallID != "" {
 		filter["sip_call_id"] = sp.SipCallID
 	}
+
 	if sp.UserAgent != "" {
-		filter["user_agent"] = bson.M{"$regex": fmt.Sprintf("^%s", sp.UserAgent)}
+		if sp.UserAgentOpr == "neq" {
+			filter["user_agent"] = bson.M{"$regex": fmt.Sprintf(MgWhereNotContain, sp.UserAgent)}
+		} else {
+			filter["user_agent"] = bson.M{"$regex": fmt.Sprintf(MgWhereContain, sp.UserAgent)}
+		}
 	}
 
 	if sp.FromUser != "" {
-		filter["from_user"] = bson.M{"$regex": fmt.Sprintf("^%s", sp.FromUser)}
+		if sp.FromUserOpr == "neq" {
+			filter["from_user"] = bson.M{"$regex": fmt.Sprintf(MgWhereNotContain, sp.FromUser)}
+		} else {
+			filter["from_user"] = bson.M{"$regex": fmt.Sprintf(MgWhereContain, sp.FromUser)}
+		}
 	}
+
 	if sp.SrcHost != "" {
-		filter["scr_host"] = sp.SrcHost
+		if sp.SrcHostOpr == "neq" {
+			filter["scr_host"] = bson.M{"$ne": sp.SrcHost}
+		} else {
+			filter["scr_host"] = sp.SrcHost
+		}
 	}
+
+	if sp.SrcCountryName != "" {
+		if sp.SrcCountryNameOpr == "neq" {
+			filter["src_country_name"] = bson.M{"$regex": fmt.Sprintf(MgWhereNotContain, sp.SrcCountryName)}
+		} else {
+			filter["src_country_name"] = bson.M{"$regex": fmt.Sprintf(MgWhereContain, sp.SrcCountryName)}
+		}
+	}
+
+	if sp.SrcCityName != "" {
+		if sp.SrcCityNameOpr == "neq" {
+			filter["src_city_name"] = bson.M{"$regex": fmt.Sprintf(MgWhereNotContain, sp.SrcCityName)}
+		} else {
+			filter["src_city_name"] = bson.M{"$regex": fmt.Sprintf(MgWhereContain, sp.SrcCityName)}
+		}
+	}
+
 	if sp.ToUser != "" {
-		filter["to_user"] = bson.M{"$regex": fmt.Sprintf("^%s", sp.ToUser)}
+		if sp.ToUserOpr == "neq" {
+			filter["to_user"] = bson.M{"$regex": fmt.Sprintf(MgWhereNotContain, sp.ToUser)}
+		} else {
+			filter["to_user"] = bson.M{"$regex": fmt.Sprintf(MgWhereContain, sp.ToUser)}
+		}
 	}
+
 	if sp.DstHost != "" {
-		filter["to_host"] = sp.DstHost
+		if sp.DstHostOpr == "neq" {
+			filter["dst_host"] = bson.M{"$ne": sp.DstHost}
+		} else {
+			filter["dst_host"] = sp.DstHost
+		}
+	}
+
+	if sp.DstCountryName != "" {
+		if sp.DstCountryNameOpr == "neq" {
+			filter["dst_country_name"] = bson.M{"$regex": fmt.Sprintf(MgWhereNotContain, sp.DstCountryName)}
+		} else {
+			filter["dst_country_name"] = bson.M{"$regex": fmt.Sprintf(MgWhereContain, sp.DstCountryName)}
+		}
+	}
+
+	if sp.DstCityName != "" {
+		if sp.DstCityNameOpr == "neq" {
+			filter["dst_city_name"] = bson.M{"$regex": fmt.Sprintf(MgWhereNotContain, sp.DstCityName)}
+		} else {
+			filter["dst_city_name"] = bson.M{"$regex": fmt.Sprintf(MgWhereContain, sp.DstCityName)}
+		}
 	}
 
 	return filter

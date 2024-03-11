@@ -185,6 +185,12 @@ func (hepMsg *HepMsg) parseHep3(udpPacket []byte) error {
 		//chunkVendorId := binary.BigEndian.Uint16(hepChunk[:2])
 		chunkType := binary.BigEndian.Uint16(hepChunk[2:4])
 		chunkLength := binary.BigEndian.Uint16(hepChunk[4:6])
+
+		//todo::实际运行过程中，chunkLength会超过len(hepChunk)，导致下面报错
+		if int(chunkLength) > len(hepChunk) {
+			continue
+		}
+
 		chunkBody := hepChunk[6:chunkLength]
 
 		switch chunkType {

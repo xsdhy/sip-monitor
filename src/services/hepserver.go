@@ -118,6 +118,14 @@ func ParseSaveNew(b []byte, ip net.IP) *entity.Record {
 }
 
 func ParseSaveOld(b []byte, ip net.IP) *entity.Record {
+	defer func() {
+		// 发生宕机时，获取panic传递的上下文并打印
+		err := recover()
+		if err != nil {
+			slog.Error("parse save err", slog.String("msg", err.(error).Error()))
+		}
+	}()
+
 	s, errType, errMsg := Format(b)
 	if errType != "" {
 		slog.Warn("format msg error",
