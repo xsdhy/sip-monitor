@@ -46,3 +46,8 @@ type CleanSipRecordDTO struct {
 
 	Method string `form:"method" json:"method"`
 }
+
+type AuthLogin struct {
+	Username string `json:"username" form:"username"`
+	Password string `json:"password" form:"password"`
+}
