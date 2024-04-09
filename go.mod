@@ -4,6 +4,7 @@ go 1.21
 
 require (
 	github.com/caarlos0/env/v10 v10.0.0
+	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/ipipdotnet/ipdb-go v1.3.3
 	github.com/pupuk/addr v0.0.3
