@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"path/filepath"
+	"sip-monitor/src/entity"
 	"sip-monitor/src/model"
 	"sip-monitor/src/pkg/env"
 
@@ -26,6 +27,9 @@ func main() {
 		flag.StringVar(&env.Conf.DSNURL, "dsn", "", "dsn")
 		flag.Parse()
 	}
+
+	model.SaveToDBQueue = make(chan entity.Record, 20000)
+	go model.SaveToDBRunner()
 
 	//初始化数据库
 	model.MongoDBInit()

@@ -75,6 +75,15 @@ func upsertSIPRecordCallInviteV3(record entity.Record, viaNum int) {
 	}
 }
 
+func SaveToDBRunner() {
+	for {
+		select {
+		case item := <-SaveToDBQueue:
+			Save(item, item.ViaNum)
+		}
+	}
+}
+
 func Save(item entity.Record, viaNum int) {
 	if CollectionRecord == nil {
 		return

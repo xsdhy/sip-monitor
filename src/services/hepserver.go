@@ -117,7 +117,7 @@ func ParseSaveNew(b []byte, ip net.IP) *entity.Record {
 	return &item
 }
 
-func ParseSaveOld(b []byte, ip net.IP) *entity.Record {
+func ParseSaveOld(b []byte, ip net.IP) {
 	defer func() {
 		// 发生宕机时，获取panic传递的上下文并打印
 		err := recover()
@@ -137,7 +137,7 @@ func ParseSaveOld(b []byte, ip net.IP) *entity.Record {
 		if errType != "method_discarded" {
 			//slog.Error(fmt.Sprintf("format msg error: %v; raw length: %d, %s,  from: %v", errType, len(b), b, ip))
 		}
-		return nil
+		return
 	}
 
 	output := siprocket.Parse([]byte(*s.Raw))
@@ -179,10 +179,13 @@ func ParseSaveOld(b []byte, ip net.IP) *entity.Record {
 		CreateTime:     s.CreateAt,
 		TimestampMicro: s.CreateAt.Add(time.Microsecond * time.Duration(s.TimestampMicro)).UnixMicro(),
 		RawMsg:         *s.Raw,
+
+		ViaNum: len(output.Via),
 	}
 
-	model.Save(item, len(output.Via))
-	return &item
+	model.SaveToDBQueue <- item
+	//model.Save(item, len(output.Via))
+	return
 }
 
 func Format(p []byte) (s *entity.SIP, errorType string, errMsg string) {

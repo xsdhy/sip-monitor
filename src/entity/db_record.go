@@ -46,4 +46,6 @@ type Record struct {
 	TimestampMicro int64 `bson:"timestamp_micro" json:"timestamp_micro"`
 
 	RawMsg string `bson:"raw_msg" json:"raw_msg"`
+
+	ViaNum int `bson:"-" json:"-"` //临时使用
 }

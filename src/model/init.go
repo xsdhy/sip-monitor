@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sip-monitor/src/entity"
 	"time"
 
 	"sip-monitor/src/pkg/env"
@@ -19,6 +20,8 @@ var CollectionRecord *mongo.Collection
 
 var CollectionRecordCall *mongo.Collection
 var CollectionRecordRegister *mongo.Collection
+
+var SaveToDBQueue chan entity.Record
 
 func MongoDBInit() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
