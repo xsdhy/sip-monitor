@@ -8,14 +8,15 @@ import (
 	"log/slog"
 	"net/http"
 	"path/filepath"
+
 	"sip-monitor/src/entity"
 	"sip-monitor/src/model"
 	"sip-monitor/src/pkg/env"
 
-	"sip-monitor/src/services"
 	"strings"
 
-	"github.com/gin-contrib/pprof"
+	"sip-monitor/src/services"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -38,11 +39,10 @@ func main() {
 	//启动HepServer
 	go services.HepServerListener()
 	//启动定时任务
-	//go services.Cron()
+	go services.Cron()
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
-	pprof.Register(r, "dev/pprof")
 	authorized := r.Group("/api", gin.BasicAuth(gin.Accounts{
 		"call": "call.2024",
 	}))
@@ -51,7 +51,7 @@ func main() {
 	authorized.GET("/record/all", services.SearchAll)
 	authorized.GET("/record/call", services.RecordCallList)
 	authorized.GET("/record/register", services.RecordRegisterList)
-	r.GET("/api/record/details", services.SearchCallID)
+	authorized.GET("/api/record/details", services.SearchCallID)
 	authorized.GET("/system/db/clean_sip_record", services.CleanSipRecord)
 	authorized.GET("/system/db/stats", services.DbStats)
 

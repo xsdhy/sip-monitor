@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"time"
 
 	"sip-monitor/src/entity"
 
@@ -30,6 +31,32 @@ func CleanSipRecord(request entity.CleanSipRecordDTO) (int64, error) {
 		return 0, err
 	}
 	return deleteResult.DeletedCount, nil
+}
+
+func CleanSipALL(endTime *time.Time) (int64, error) {
+	if endTime == nil {
+		return 0, nil
+	}
+	filter := bson.M{}
+	timeFilter := bson.M{}
+	timeFilter["$lte"] = endTime
+	filter["create_time"] = timeFilter
+
+	var deleteTotal int64
+
+	record, err := CollectionRecord.DeleteMany(context.Background(), filter, nil)
+	if err == nil {
+		deleteTotal = deleteTotal + record.DeletedCount
+	}
+	call, err := CollectionRecordCall.DeleteMany(context.Background(), filter, nil)
+	if err == nil {
+		deleteTotal = deleteTotal + call.DeletedCount
+	}
+	reg, err := CollectionRecordRegister.DeleteMany(context.Background(), filter, nil)
+	if err == nil {
+		deleteTotal = deleteTotal + reg.DeletedCount
+	}
+	return deleteTotal, nil
 }
 
 func DbStats(ctx context.Context, tableName string) *entity.MongoDBStatsVO {
