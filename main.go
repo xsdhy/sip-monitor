@@ -43,20 +43,20 @@ func main() {
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
-	authorized := r.Group("/api", gin.BasicAuth(gin.Accounts{
-		"call": "call.2024",
-	}))
+
+	authorized := r.Group("/api", gin.BasicAuth(gin.Accounts{"call": "call.2024"}))
 
 	//后端接口
 	authorized.GET("/record/all", services.SearchAll)
 	authorized.GET("/record/call", services.RecordCallList)
 	authorized.GET("/record/register", services.RecordRegisterList)
-	authorized.GET("/api/record/details", services.SearchCallID)
+	authorized.GET("/record/details", services.SearchCallID)
 	authorized.GET("/system/db/clean_sip_record", services.CleanSipRecord)
 	authorized.GET("/system/db/stats", services.DbStats)
 
 	//前端资源
 	r.Use(ServerStatic("web/build", dist))
+
 	serverHost := fmt.Sprintf("0.0.0.0:%d", env.Conf.HTTPListenPort)
 	slog.Info("HttpServerInit", slog.String("host", serverHost))
 	err := r.Run(serverHost)
