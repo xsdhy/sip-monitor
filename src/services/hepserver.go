@@ -184,7 +184,6 @@ func ParseSaveOld(b []byte, ip net.IP) {
 	}
 
 	model.SaveToDBQueue <- item
-	//model.Save(item, len(output.Via))
 	return
 }
 
