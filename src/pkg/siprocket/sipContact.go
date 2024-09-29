@@ -48,7 +48,7 @@ func parseSipContact(v []byte, out *sipContact) {
 	out.Src = nil
 
 	// Keep the source line if needed
-	if keep_src {
+	if keepSrc {
 		out.Src = v
 	}
 

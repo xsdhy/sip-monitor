@@ -1,4 +1,4 @@
-package services
+package callbuffer
 
 import (
 	"sip-monitor/src/entity"
@@ -25,14 +25,14 @@ func NewCallBuffer() *CallBuffer {
 	}
 }
 
-func (cb *CallBuffer) Add(item entity.Record, viaNum int) *entity.SIPRecordCall {
+func (cb *CallBuffer) Add(item *entity.SIP) *entity.SIPRecordCall {
 	switch item.CSeqMethod {
 	case "REGISTER":
 		break
 	case "INVITE", "BYE", "ACK", "CANCEL", "UPDATE":
 		switch item.SIPMethod {
 		case "INVITE":
-			if viaNum > 1 {
+			if cb.stage >= StageCreate {
 				//更新目的地址
 				cb.result.DstHost = item.DstHost
 				cb.result.DstPort = item.DstPort
@@ -43,10 +43,13 @@ func (cb *CallBuffer) Add(item entity.Record, viaNum int) *entity.SIPRecordCall 
 				//第一次创建
 				cb.stage = StageCreate
 
+				cb.result.UUID = item.UUID
+				cb.result.NodeID = item.NodeID
 				cb.result.NodeIP = item.NodeIP
-				cb.result.SIPCallID = item.SIPCallID
-				cb.result.ToUser = item.ToUser
-				cb.result.FromUser = item.FromUser
+
+				cb.result.CallID = item.CallID
+				cb.result.ToUser = item.ToUsername
+				cb.result.FromUser = item.FromUsername
 				cb.result.UserAgent = item.UserAgent
 
 				cb.result.SrcHost = item.SrcHost

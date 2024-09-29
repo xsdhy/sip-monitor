@@ -4,7 +4,7 @@ export type CallRecordListDTO = {
     page?:number
     page_size?:number
 
-    sip_call_id?: string
+    call_id?: string
     node_ip?: string
     ua?: string
 

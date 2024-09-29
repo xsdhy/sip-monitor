@@ -1,16 +1,13 @@
 package services
 
 import (
-	"bytes"
-	"encoding/binary"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
 	"strconv"
 	"strings"
 	"time"
-
-	"sip-monitor/src/pkg/siprocket"
 
 	"sip-monitor/src/entity"
 	"sip-monitor/src/model"
@@ -22,7 +19,7 @@ import (
 func HepServerListener() {
 	conn, err := net.ListenUDP("udp", &net.UDPAddr{Port: env.Conf.UDPListenPort})
 	if err != nil {
-		slog.Error("HepServerListener Udp Service listen report udp fail", err)
+		slog.Error("HepServerListener Udp Service listen report udp fail", slog.String("reason", err.Error()))
 	}
 
 	defer conn.Close()
@@ -37,11 +34,11 @@ func HepServerListener() {
 		}
 		n, remoteAddr, err := conn.ReadFromUDP(data)
 		if err != nil {
-			if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
+			var opErr *net.OpError
+			if errors.As(err, &opErr) && opErr.Timeout() {
 				continue
-			} else {
-				slog.Error("read udp error", err, slog.String("remoteAddr", remoteAddr.IP.String()))
 			}
+			slog.Error("read udp error", err.Error(), slog.String("remoteAddr", remoteAddr.IP.String()))
 		}
 
 		if n < entity.MinRawPacketLength {
@@ -61,62 +58,6 @@ func HepServerListener() {
 	}
 }
 
-func ParseSaveNew(b []byte, ip net.IP) *entity.Record {
-	msg, err := hep.NewHepMsg(b)
-	if err != nil {
-		return nil
-	}
-
-	if msg.SipMsg == nil {
-		msg.SipMsg = siprocket.Parse(msg.Body)
-	}
-
-	if msg.SipMsg == nil {
-		slog.Warn("消息体为空", slog.String("ip", ip.String()), slog.Any("IPProtocolID", string(msg.IPProtocolID)))
-		return nil
-	}
-	ua := msg.SipMsg.Ua.ToString()
-	if len(ua) > entity.MaxUserAgentLength {
-		ua = ua[:entity.MaxUserAgentLength]
-	}
-	item := entity.Record{
-		ID: model.GetMd5(msg.SipMsg.CallId.ToString(), msg.SipMsg.Raw, ip.String()),
-
-		NodeIP: ip.String(),
-
-		SIPMethod:    string(msg.SipMsg.Req.Method),
-		ResponseCode: BytesToInt(msg.SipMsg.Req.StatusCode),
-		ResponseDesc: string(msg.SipMsg.Req.StatusDesc),
-
-		CSeqMethod:  string(msg.SipMsg.Cseq.Method),
-		CSeqNumber:  BytesToInt(msg.SipMsg.Cseq.Id),
-		FromUser:    string(msg.SipMsg.From.User),
-		FromHost:    string(msg.SipMsg.From.Host),
-		ToUser:      string(msg.SipMsg.To.User),
-		ToHost:      string(msg.SipMsg.To.Host),
-		SIPCallID:   msg.SipMsg.CallId.ToString(),
-		SIPProtocol: uint(msg.IPProtocolID),
-		UserAgent:   ua,
-
-		CreateTime:     time.Unix(int64(msg.Timestamp), 0),
-		TimestampMicro: int64(msg.TimestampMicro),
-		RawMsg:         msg.SipMsg.Raw,
-	}
-
-	item.SrcAddr = fmt.Sprintf("%s_%d", msg.SipMsg.From.Host, msg.SipMsg.From.Port)
-	item.SrcHost = string(msg.SipMsg.From.Host)
-	item.SrcPort = BytesToInt(msg.SipMsg.From.Port)
-	item.SrcCountryName, item.SrcCityName, _ = GetIPArea(item.SrcHost)
-
-	item.DstAddr = fmt.Sprintf("%s_%d", msg.SipMsg.To.Host, msg.SipMsg.To.Port)
-	item.DstHost = string(msg.SipMsg.From.Host)
-	item.DstPort = BytesToInt(msg.SipMsg.From.Port)
-	item.DstCountryName, item.DstCityName, _ = GetIPArea(item.SrcHost)
-
-	//model.Save(item,len(msg.SipMsg.Via))
-	return &item
-}
-
 func ParseSaveOld(b []byte, ip net.IP) {
 	defer func() {
 		// 发生宕机时，获取panic传递的上下文并打印
@@ -126,84 +67,24 @@ func ParseSaveOld(b []byte, ip net.IP) {
 		}
 	}()
 
-	s, errType, errMsg := Format(b)
-	if errType != "" {
-		slog.Warn("format msg error",
-			slog.Int("raw_length", len(b)),
-			slog.String("from", ip.String()),
-			slog.String("err_type", errType),
-			slog.String("err_msg", errMsg),
-		)
-		if errType != "method_discarded" {
-			//slog.Error(fmt.Sprintf("format msg error: %v; raw length: %d, %s,  from: %v", errType, len(b), b, ip))
-		}
+	hepMsg, err := hep.NewHepMsg(b)
+
+	if err != nil {
+		slog.Error("NewHepMsg error", slog.String("err", err.Error()))
 		return
 	}
 
-	output := siprocket.Parse([]byte(*s.Raw))
-
-	ua := s.UserAgent
-	if len(ua) > entity.MaxUserAgentLength {
-		ua = ua[:entity.MaxUserAgentLength]
-	}
-	item := entity.Record{
-		ID:           model.GetMd5(s.CallID, *s.Raw, ip.String()),
-		NodeIP:       ip.String(),
-		FsCallID:     s.FSCallID,
-		LegUid:       s.UID,
-		SIPMethod:    s.Title,
-		ResponseCode: s.ResponseCode,
-		ResponseDesc: s.ResponseDesc,
-		CSeqMethod:   s.CSeqMethod,
-		CSeqNumber:   s.CSeqNumber,
-		FromUser:     s.FromUsername,
-		FromHost:     s.FromDomain,
-		ToUser:       s.ToUsername,
-		ToHost:       s.ToDomain,
-		SIPCallID:    s.CallID,
-		SIPProtocol:  uint(s.Protocol),
-		UserAgent:    ua,
-
-		SrcHost:        s.SrcHost,
-		SrcPort:        s.SrcPort,
-		SrcAddr:        s.SrcAddr,
-		SrcCityName:    s.SrcCityName,
-		SrcCountryName: s.SrcCountryName,
-
-		DstHost:        s.DstHost,
-		DstPort:        s.DstPort,
-		DstAddr:        s.DstAddr,
-		DstCityName:    s.DstCityName,
-		DstCountryName: s.DstCountryName,
-
-		CreateTime:     s.CreateAt,
-		TimestampMicro: s.CreateAt.Add(time.Microsecond * time.Duration(s.TimestampMicro)).UnixMicro(),
-		RawMsg:         *s.Raw,
-
-		ViaNum: len(output.Via),
-	}
-
-	model.SaveToDBQueue <- item
-	return
-}
-
-func Format(p []byte) (s *entity.SIP, errorType string, errMsg string) {
-	hepMsg, err := hep.NewHepMsg(p)
-
-	if err != nil {
-		slog.Error("NewHepMsg error %v", err)
-		return nil, "hep_parse_error", ""
-	}
-
 	if len(hepMsg.Body) <= 0 {
-		return nil, "hep_body_is_empty", ""
+		return
 	}
 
 	if len(hepMsg.Body) < env.Conf.MinPacketLength {
-		return nil, "hep_body_is_too_small", ""
+		return
 	}
 
 	sip := parser.Parser{SIP: entity.SIP{}}
+	sip.NodeIP = ip.String()
+	sip.NodeID = strconv.Itoa(int(hepMsg.CaptureAgentID))
 
 	bodyS := string(hepMsg.Body)
 
@@ -213,23 +94,23 @@ func Format(p []byte) (s *entity.SIP, errorType string, errMsg string) {
 	sip.TimestampMicro = hepMsg.TimestampMicro
 
 	if sip.CSeqMethod == "" {
-		return nil, "cseq_is_empty", ""
+		return
 	}
 
 	if strings.Contains(env.Conf.DiscardMethods, sip.CSeqMethod) {
-		return nil, "method_discarded", sip.CSeqMethod
+		return
 	}
 
 	sip.ParseCallID()
 
 	if sip.CallID == "" {
-		return nil, "callid_is_empty", ""
+		return
 	}
 
 	sip.ParseFirstLine()
 
 	if sip.Title == "" {
-		return nil, "title_is_empty", ""
+		return
 	}
 
 	if sip.RequestURL != "" {
@@ -239,15 +120,13 @@ func Format(p []byte) (s *entity.SIP, errorType string, errMsg string) {
 	sip.ParseFrom()
 	sip.ParseTo()
 	sip.ParseUserAgent()
-	sip.CreateAt = time.Unix(int64(hepMsg.Timestamp), 0)
 
-	if env.Conf.HeaderFSCallIDName != "" {
-		sip.ParseFSCallID(env.Conf.HeaderFSCallIDName)
+	if len(sip.UserAgent) > entity.MaxUserAgentLength {
+		sip.UserAgent = sip.UserAgent[:entity.MaxUserAgentLength]
 	}
 
-	if env.Conf.HeaderUIDName != "" {
-		sip.ParseUID(env.Conf.HeaderUIDName)
-	}
+	sip.CreateTime = time.Unix(int64(hepMsg.Timestamp), 0)
+	//s.TimestampMicro=s.CreateTime.Add(time.Microsecond * time.Duration(s.TimestampMicro)).UnixMicro()
 
 	sip.Protocol = int(hepMsg.IPProtocolID)
 
@@ -261,13 +140,8 @@ func Format(p []byte) (s *entity.SIP, errorType string, errMsg string) {
 	sip.DstPort = int(hepMsg.DestinationPort)
 	sip.DstCountryName, sip.DstCityName, _ = GetIPArea(hepMsg.IP4DestinationAddress)
 
-	sip.NodeID = strconv.Itoa(int(hepMsg.CaptureAgentID))
+	sip.UUID = fmt.Sprintf("%s%d%s", sip.NodeIP, hepMsg.CaptureAgentID, sip.CallID)
 
-	return &sip.SIP, "", ""
-}
-
-func BytesToInt(bys []byte) int {
-	var data int64
-	_ = binary.Read(bytes.NewBuffer(bys), binary.BigEndian, &data)
-	return int(data)
+	model.SaveToDBQueue <- &sip.SIP
+	return
 }

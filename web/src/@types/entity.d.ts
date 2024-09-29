@@ -22,7 +22,7 @@ export interface MetaVO {
 
 export interface CallRecordEntity {
     id: number
-    sip_call_id: string
+    call_id: string
     sip_method: string
     create_time: string
     create_time_short?: string
@@ -59,7 +59,7 @@ export interface SIPRecordCall {
     id: string;
 
     node_ip: string;
-    sip_call_id: string;
+    call_id: string;
 
     to_user: string;
     from_user: string;
@@ -96,7 +96,7 @@ export interface SIPRecordRegister {
 
     create_time: string; // Assuming time.Time is serialized as a string
 
-    sip_call_id: string;
+    call_id: string;
 
     from_user: string;
 

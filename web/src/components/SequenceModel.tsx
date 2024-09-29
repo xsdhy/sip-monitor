@@ -10,7 +10,7 @@ export function SequenceModel(p: Prop) {
         <div>
             <SequenceDiagram callID={p.callID}/>
             <Button type="link">
-                <a target="_blank" href={'/call/details?sip_call_id=' + p.callID}>新页面中打开</a>
+                <a target="_blank" href={'/call/details?call_id=' + p.callID}>新页面中打开</a>
             </Button>
         </div>
     );

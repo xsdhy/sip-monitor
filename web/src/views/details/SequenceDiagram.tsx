@@ -62,9 +62,9 @@ export default function SequenceDiagram(p: Prop) {
 
     useEffect(() => {
         const searchParams = new URLSearchParams(window.location.search);
-        const sipCallId = p.callID || searchParams.get('sip_call_id') || "";
+        const sipCallId = p.callID || searchParams.get('call_id') || "";
 
-        AppAxios.get<CallRecordDetailsVO>(`/record/details?sip_call_id=` + sipCallId).then(res => {
+        AppAxios.get<CallRecordDetailsVO>(`/record/details?call_id=` + sipCallId).then(res => {
             setSeq(res.data.data)
             setLoading(false)
         })

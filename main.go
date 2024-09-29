@@ -29,11 +29,11 @@ func main() {
 		flag.Parse()
 	}
 
-	model.SaveToDBQueue = make(chan entity.Record, 20000)
+	model.SaveToDBQueue = make(chan *entity.SIP, 20000)
 	go model.SaveToDBRunner()
 
 	//初始化数据库
-	model.MongoDBInit()
+	model.DBInit()
 	//初始化IP库
 	services.IPDBInit()
 	//启动HepServer
@@ -47,7 +47,6 @@ func main() {
 	authorized := r.Group("/api", gin.BasicAuth(gin.Accounts{"call": "call.2024"}))
 
 	//后端接口
-	authorized.GET("/record/all", services.SearchAll)
 	authorized.GET("/record/call", services.RecordCallList)
 	authorized.GET("/record/register", services.RecordRegisterList)
 	authorized.GET("/record/details", services.SearchCallID)

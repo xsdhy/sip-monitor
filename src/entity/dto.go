@@ -9,7 +9,7 @@ type SearchParams struct {
 	Page     int64 `json:"page" form:"page"`
 
 	NodeIP       string `json:"node_ip" form:"node_ip"`
-	SipCallID    string `json:"sip_call_id" form:"sip_call_id"`
+	CallID       string `json:"call_id" form:"call_id"`
 	UserAgent    string `json:"ua" form:"ua"`
 	UserAgentOpr string `json:"ua_opr" form:"ua_opr"`
 

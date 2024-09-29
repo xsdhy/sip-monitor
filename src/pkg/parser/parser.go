@@ -193,30 +193,6 @@ func (p *Parser) GetHeaderValue(header string) (v string) {
 	return strings.TrimSpace(newStr[len(header)+1 : endIndex])
 }
 
-func (p *Parser) ParseUID(HeaderUIDName string) {
-	if HeaderUIDName == "" {
-		return
-	}
-
-	v := p.GetHeaderValue(HeaderUIDName)
-	if v == EmptyStr {
-		return
-	}
-	p.UID = v
-}
-
-func (p *Parser) ParseFSCallID(FSCallID string) {
-	if FSCallID == "" {
-		return
-	}
-
-	v := p.GetHeaderValue(FSCallID)
-	if v == EmptyStr {
-		return
-	}
-	p.FSCallID = v
-}
-
 func init() {
 	am := map[string]struct{}{
 		"INVITE":    empty,

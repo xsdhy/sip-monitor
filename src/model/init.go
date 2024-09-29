@@ -4,55 +4,53 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sip-monitor/src/model/mongo"
+	"sip-monitor/src/model/mysql"
+	"sip-monitor/src/pkg/callbuffer"
 	"time"
 
 	"sip-monitor/src/entity"
-	"sip-monitor/src/services"
-
 	"sip-monitor/src/pkg/env"
-
-	"go.mongodb.org/mongo-driver/bson"
-
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var MongoDB *mongo.Database
-var CollectionRecord *mongo.Collection
+var Infra DB
 
-var CollectionRecordCall *mongo.Collection
-var CollectionRecordRegister *mongo.Collection
+var SaveToDBQueue chan *entity.SIP
 
-var SaveToDBQueue chan entity.Record
+var CallBufferMap map[string]*callbuffer.CallBuffer
 
-var CallBufferMap map[string]*services.CallBuffer
+type DB interface {
+	SaveMsg(sip *entity.SIP)
+	SaveCall(sip *entity.SIPRecordCall)
 
-func MongoDBInit() {
+	GetDetailsBySipCallID(ctx context.Context, searchParams entity.SearchParams) ([]entity.Record, error)
+	GetRecordRegisterList(ctx context.Context, searchParams entity.SearchParams) ([]entity.SIPRecordRegister, *entity.Meta, error)
+	GetRecordCallList(ctx context.Context, searchParams entity.SearchParams) ([]entity.SIPRecordCall, *entity.Meta, error)
+}
+
+func DBInit() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if env.Conf.DSNURL == "" {
-		slog.Info("MongoDBInit BY DBUser、DBPassword、DBAddr")
-		env.Conf.DSNURL = fmt.Sprintf("mongodb://%s:%s@%s", env.Conf.DBUser, env.Conf.DBPassword, env.Conf.DBAddr)
-	} else {
-		slog.Info("MongoDBInit BY DSN_URL")
+	var err error
+	switch env.Conf.DBType {
+	case "mongo":
+		if env.Conf.DSNURL == "" {
+			slog.Info("MongoDBInit BY DBUser、DBPassword、DBAddr")
+			env.Conf.DSNURL = fmt.Sprintf("mongodb://%s:%s@%s", env.Conf.DBUser, env.Conf.DBPassword, env.Conf.DBAddr)
+		} else {
+			slog.Info("MongoDBInit BY DSN_URL")
+		}
+		Infra, err = mongo.NewMongoInfra(ctx, env.Conf.DSNURL)
+	case "mysql":
+	case "file":
+	case "memory":
+		Infra, err = mysql.NewNosqlInfra(ctx, env.Conf.DSNURL)
+	default:
+		slog.Info("no db")
 	}
-
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(env.Conf.DSNURL))
 	if err != nil {
-		slog.Error("MongoDBInit Error", slog.String("err:", err.Error()))
-		return
+		slog.Error(err.Error())
 	}
-
-	MongoDB = client.Database(env.Conf.DBName)
-	CollectionRecord = MongoDB.Collection("call_records")
-	CollectionRecordCall = MongoDB.Collection("call_records_call")
-	CollectionRecordRegister = MongoDB.Collection("call_records_register")
-
-	index := mongo.IndexModel{
-		Keys:    bson.M{"sip_call_id": 1},
-		Options: options.Index().SetUnique(true),
-	}
-	_, _ = CollectionRecordCall.Indexes().CreateOne(context.Background(), index)
-	_, _ = CollectionRecordRegister.Indexes().CreateOne(context.Background(), index)
+	slog.Info("Init DB success")
 }

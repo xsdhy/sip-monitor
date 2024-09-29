@@ -1,12 +1,10 @@
 package services
 
 import (
-	"fmt"
 	"log/slog"
 	"sip-monitor/resources"
 
 	"github.com/ipipdotnet/ipdb-go"
-	"github.com/pupuk/addr"
 	"github.com/xiaoqidun/qqwry"
 )
 
@@ -40,15 +38,10 @@ func GetIPArea(ip string) (string, string, string) {
 }
 
 func GetIPAreaByCZ(ip string) (string, string, string) {
-	address, isp, err := qqwry.QueryIP(ip)
+	address, err := qqwry.QueryIP(ip)
 	if err != nil {
 		return "", "", ""
 	}
 
-	fmt.Println(address, isp)
-	parse := addr.Smart(address)
-	if parse.PostCode == "" {
-		return address, "", isp
-	}
-	return "中国", parse.City, isp
+	return address.Country, address.Province + address.City, address.ISP
 }

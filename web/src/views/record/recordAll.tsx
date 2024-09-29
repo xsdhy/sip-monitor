@@ -66,8 +66,8 @@ function RecordAll() {
         },
         {
             title: 'CallID',
-            dataIndex: 'sip_call_id',
-            key: 'sip_call_id',
+            dataIndex: 'call_id',
+            key: 'call_id',
             ellipsis: true,
         },
         {
@@ -75,7 +75,7 @@ function RecordAll() {
             key: 'action',
             width: 80,
             render: (_, record) => (
-                <Button type="link" onClick={()=>{OpenSeqModel(record.sip_call_id)}}>信令</Button>
+                <Button type="link" onClick={()=>{OpenSeqModel(record.call_id)}}>信令</Button>
             ),
         },
     ]

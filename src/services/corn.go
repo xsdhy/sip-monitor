@@ -13,7 +13,7 @@ func Cron() {
 	c := cron.New()
 	_, err := c.AddFunc("@every 1h", DailyDelete)
 	if err != nil {
-		slog.Error("定时任务添加失败:", err)
+		slog.Error("定时任务添加失败:", slog.String("err", err.Error()))
 	}
 	c.Start()
 }
@@ -24,7 +24,7 @@ func DailyDelete() {
 
 	allRecordNum, err := model.CleanSipALL(&day)
 	if err != nil {
-		slog.Error("DailyDelete CleanSipRecord error:", err)
+		slog.Error("DailyDelete CleanSipRecord error:", slog.String("err", err.Error()))
 	}
 	slog.Info("DailyDelete SipRecord ", slog.Int64("total", allRecordNum))
 }

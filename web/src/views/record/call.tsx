@@ -100,8 +100,8 @@ function RecordCall() {
         },
         {
             title: 'CallID',
-            dataIndex: 'sip_call_id',
-            key: 'sip_call_id',
+            dataIndex: 'call_id',
+            key: 'call_id',
             fixed: 'right',
             width: 100,
             ellipsis: true,
@@ -113,7 +113,7 @@ function RecordCall() {
             fixed: 'right',
             render: (_, record) => (
                 <Button type="link" onClick={() => {
-                    OpenSeqModel(record.sip_call_id)
+                    OpenSeqModel(record.call_id)
                 }}>信令</Button>
             ),
         },

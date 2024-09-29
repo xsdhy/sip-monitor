@@ -67,7 +67,7 @@ export function SearchForm(p: Prop) {
             autoComplete="off"
         >
             <Row gutter={24}>
-                <Form.Item<CallRecordListDTO> style={formItemStyle} label="CALL_ID" name="sip_call_id"><Input allowClear/></Form.Item>
+                <Form.Item<CallRecordListDTO> style={formItemStyle} label="CALL_ID" name="call_id"><Input allowClear/></Form.Item>
                 <Form.Item<CallRecordListDTO> style={formItemStyle} label="节点IP" name="node_ip"><Input allowClear/></Form.Item>
 
                 <Form.Item<CallRecordListDTO> style={formItemStyle} label="SIPMethod">

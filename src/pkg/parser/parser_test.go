@@ -316,39 +316,6 @@ func TestParseFromToUA(t *testing.T) {
 	}
 }
 
-func TestParseUIDAndFSCallID(t *testing.T) {
-
-	successCases := []struct {
-		in  string
-		uid string
-		fid string
-	}{
-		{
-			in:  "X-UID: myuid\r\nX-FID: test-fs-id\r\n",
-			uid: "myuid",
-			fid: "test-fs-id",
-		},
-		{
-			in:  inviteMsg,
-			uid: "uid",
-			fid: "fsid",
-		},
-	}
-
-	for _, item := range successCases {
-		sip := Parser{
-			entity.SIP{
-				Raw: &item.in,
-			}}
-
-		sip.ParseUID("X-UID")
-		sip.ParseFSCallID("X-FID")
-
-		assert.Equal(t, item.uid, sip.UID)
-		assert.Equal(t, item.fid, sip.FSCallID)
-	}
-}
-
 func TestParseCallID(t *testing.T) {
 	successCases := []struct {
 		msg    string

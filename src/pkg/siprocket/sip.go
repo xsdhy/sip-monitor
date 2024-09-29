@@ -7,8 +7,7 @@ import (
 	"strings"
 )
 
-var sip_type = 0
-var keep_src = true
+var keepSrc = true
 
 type SipMsg struct {
 	Req      sipReq
@@ -44,7 +43,7 @@ func (s *sipVal) ToString() string {
 	return string(s.Value)
 }
 
-// Main parsing routine, passes by value
+// Parse Main parsing routine, passes by value
 func Parse(v []byte) (output *SipMsg) {
 	if len(v) <= 0 {
 		return nil
@@ -132,7 +131,6 @@ func Parse(v []byte) (output *SipMsg) {
 
 // Finds the first valid Seperate or notes its type
 func indexSep(s []byte) (int, byte) {
-
 	for i := 0; i < len(s); i++ {
 		if s[i] == ':' {
 			return i, ':'

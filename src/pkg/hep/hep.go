@@ -9,8 +9,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"net"
-
-	"sip-monitor/src/pkg/siprocket"
 )
 
 /*************************************
@@ -104,7 +102,7 @@ type HepMsg struct {
 	KeepAliveTimer        uint16
 	AuthenticateKey       string
 	Body                  []byte
-	SipMsg                *siprocket.SipMsg
+	//SipMsg                *siprocket.SipMsg
 	//SipMsg	*sip.SipMsg
 }
 
@@ -144,8 +142,7 @@ func (hepMsg *HepMsg) parseHep1(udpPacket []byte) error {
 	hepMsg.IP4DestinationAddress = net.IP(udpPacket[12:16]).String()
 	hepMsg.Body = udpPacket[16:]
 	if len(udpPacket[16:packetLength-4]) > 1 {
-		hepMsg.SipMsg = siprocket.Parse(udpPacket[16:packetLength])
-
+		//hepMsg.SipMsg = siprocket.Parse(udpPacket[16:packetLength])
 	} else {
 
 	}
@@ -168,7 +165,7 @@ func (hepMsg *HepMsg) parseHep2(udpPacket []byte) error {
 	hepMsg.CaptureAgentID = binary.BigEndian.Uint16(udpPacket[24:26])
 	hepMsg.Body = udpPacket[28:]
 	if len(udpPacket[28:packetLength-4]) > 1 {
-		hepMsg.SipMsg = siprocket.Parse(udpPacket[16:packetLength])
+		//hepMsg.SipMsg = siprocket.Parse(udpPacket[16:packetLength])
 	} else {
 
 	}

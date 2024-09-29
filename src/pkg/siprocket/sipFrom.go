@@ -35,7 +35,7 @@ func parseSipFrom(v []byte, out *sipFrom) {
 	out.Src = nil
 
 	// Keep the source line if needed
-	if keep_src {
+	if keepSrc {
 		out.Src = v
 	}
 

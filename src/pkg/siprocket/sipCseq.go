@@ -1,6 +1,5 @@
 package siprocket
 
-
 /*
  RFC 3261 - https://www.ietf.org/rfc/rfc3261.txt - 8.1.1.5 CSeq
 
@@ -31,7 +30,7 @@ func parseSipCseq(v []byte, out *sipCseq) {
 	out.Src = nil
 
 	// Keep the source line if needed
-	if keep_src {
+	if keepSrc {
 		out.Src = v
 	}
 

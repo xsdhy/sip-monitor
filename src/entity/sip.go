@@ -13,24 +13,32 @@ const (
 )
 
 type SIP struct {
-	NodeID   string
-	NodeName string
+	UUID string //唯一ID
 
-	Title           string // Method or Status
-	IsRequest       bool
-	ResponseCode    int
-	ResponseDesc    string
+	NodeIP string
+	NodeID string
+
+	Title       string // Method or Status
+	SIPMethod   string
+	SIPProtocol uint
+	IsRequest   bool
+
 	CallID          string
 	RequestURL      string
 	RequestUsername string
 	RequestDomain   string
-	ToUsername      string
-	ToDomain        string
-	FromUsername    string
-	FromDomain      string
-	CSeqNumber      int
-	CSeqMethod      string
-	UserAgent       string
+
+	ToUsername   string
+	ToDomain     string
+	FromUsername string
+	FromDomain   string
+
+	ResponseCode int
+	ResponseDesc string
+
+	CSeqNumber int
+	CSeqMethod string
+	UserAgent  string
 
 	SrcHost        string
 	SrcPort        int
@@ -47,7 +55,8 @@ type SIP struct {
 	CreateAt       time.Time
 	TimestampMicro uint32
 	Protocol       int
-	UID            string  // correlative id for AB call leg
-	FSCallID       string  // freeswitch CallID
-	Raw            *string // raw sip message
+
+	Raw *string // raw sip message
+
+	CreateTime time.Time
 }
