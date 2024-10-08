@@ -3,7 +3,7 @@ package mongo
 import (
 	"context"
 	"fmt"
-	"log/slog"
+
 	"sip-monitor/src/entity"
 )
 
@@ -13,10 +13,9 @@ func (m *MgInfra) SaveCall(item *entity.SIPRecordCall) {
 	}
 	_, err := m.CollectionRecordCall.InsertOne(context.Background(), item)
 	if err != nil {
-		slog.Error("Save Item call Error:", err.Error())
+		m.logger.WithError(err).Error("Save Item call Error:")
 		return
 	}
-	slog.Debug("Save Item call", slog.String("msg", fmt.Sprintf("%s(%s) %s->%s", "inteve", item.CallID, item.FromUser+item.SrcHost, item.ToUser+item.DstHost)))
 }
 
 func (m *MgInfra) SaveMsg(item *entity.SIP) {
@@ -26,19 +25,24 @@ func (m *MgInfra) SaveMsg(item *entity.SIP) {
 	if item.Raw == nil {
 		return
 	}
+	timestamp := uint64(item.CreateTime.Unix()*1000) + item.TimestampMicro/1000
 	ctx := context.TODO()
 	_, err := m.CollectionRecord.InsertOne(ctx, entity.Record{
 		UUID:       item.UUID,
 		NodeID:     item.NodeID,
 		NodeIP:     item.NodeIP,
 		CallID:     item.CallID,
+		Method:     item.Title,
+		Src:        item.SrcAddr,
+		Dst:        item.DstAddr,
 		CreateTime: item.CreateTime,
+		Timestamp:  timestamp,
 		Body:       *item.Raw,
 	})
 
 	if err != nil {
-		slog.Error("Save Item Sip Message Error:", err.Error())
+		m.logger.WithError(err).Error("Save Item Sip Message Error:")
 		return
 	}
-	slog.Debug("Save Item", slog.String("msg", fmt.Sprintf("%s(%s) %s->%s", item.CSeqMethod, item.CallID, item.FromUsername+item.FromDomain, item.ToUsername+item.ToDomain)))
+	m.logger.Debug(fmt.Sprintf("Save Item msg%s(%s) %s->%s", item.CSeqMethod, item.CallID, item.FromUsername+item.FromDomain, item.ToUsername+item.ToDomain))
 }

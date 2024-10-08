@@ -5,7 +5,7 @@ import (
 )
 
 type SIPRecordRegister struct {
-	ID string `bson:"_id" json:"id" gorm:"type:varchar(36);primaryKey;comment:'记录ID'"`
+	ID string `bson:"-" json:"id" gorm:"type:varchar(36);primaryKey;comment:'记录ID'"`
 
 	UUID   string `bson:"uuid" json:"uuid" gorm:"type:varchar(36);comment:'系统唯一ID'"`
 	NodeID string `bson:"node_id" json:"node_id" gorm:"type:varchar(36);comment:'节点ID'"`

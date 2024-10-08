@@ -11,3 +11,4 @@
 *.sw?
 sbc
 sip-monitor
+Makefile

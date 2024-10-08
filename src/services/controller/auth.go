@@ -1,4 +1,4 @@
-package services
+package controller
 
 import (
 	"sip-monitor/src/entity"
@@ -6,11 +6,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AuthLogin(c *gin.Context) {
+func (h *HttpServer) AuthLogin(c *gin.Context) {
 	var request entity.AuthLogin
 	err := c.ShouldBind(&request)
 	if err != nil {
 		return
 	}
+	
 
 }

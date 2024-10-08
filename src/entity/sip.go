@@ -18,10 +18,8 @@ type SIP struct {
 	NodeIP string
 	NodeID string
 
-	Title       string // Method or Status
-	SIPMethod   string
-	SIPProtocol uint
-	IsRequest   bool
+	Title     string // Method or Status
+	IsRequest bool
 
 	CallID          string
 	RequestURL      string
@@ -38,7 +36,8 @@ type SIP struct {
 
 	CSeqNumber int
 	CSeqMethod string
-	UserAgent  string
+
+	UserAgent string
 
 	SrcHost        string
 	SrcPort        int
@@ -53,8 +52,8 @@ type SIP struct {
 	DstCityName    string
 
 	CreateAt       time.Time
-	TimestampMicro uint32
-	Protocol       int
+	TimestampMicro uint64 // 微秒
+	Protocol       int    // 6表示 TCP，17 表示 UDP
 
 	Raw *string // raw sip message
 

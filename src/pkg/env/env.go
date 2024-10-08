@@ -17,7 +17,7 @@ type config struct {
 	DiscardMethods  string `env:"DiscardMethods" envDefault:"OPTIONS"`
 	MinPacketLength int    `env:"MinPacketLength" envDefault:"24"`
 
-	DBType     string `env:"DBType" envDefault:"file"`
+	DBType     string `env:"DBType" envDefault:"mongo"`
 	DSNURL     string `env:"DSN_URL" envDefault:""`
 	DBUser     string `env:"DBUser" envDefault:""`
 	DBPassword string `env:"DBPassword" envDefault:""`

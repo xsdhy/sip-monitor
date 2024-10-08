@@ -5,7 +5,7 @@ import (
 )
 
 type SIPRecordCall struct {
-	ID string `bson:"_id" json:"id" gorm:"type:varchar(36);primaryKey;comment:'记录ID'"`
+	ID string `bson:"-" json:"id" gorm:"type:varchar(36);primaryKey;comment:'记录ID'"`
 
 	UUID string `bson:"uuid" json:"uuid" gorm:"type:varchar(36);comment:'系统中的唯一ID'"`
 
@@ -20,13 +20,11 @@ type SIPRecordCall struct {
 
 	SrcHost        string `bson:"src_host" json:"src_host" gorm:"type:varchar(50);comment:'源主机'"`
 	SrcPort        int    `bson:"src_port" json:"src_port" gorm:"type:int;comment:'源端口'"`
-	SrcAddr        string `bson:"src_addr" json:"src_addr" gorm:"type:varchar(100);comment:'源地址'"`
 	SrcCountryName string `bson:"src_country_name" json:"src_country_name" gorm:"type:varchar(50);comment:'源国家名称'"`
 	SrcCityName    string `bson:"src_city_name" json:"src_city_name" gorm:"type:varchar(50);comment:'源城市名称'"`
 
 	DstHost        string `bson:"dst_host" json:"dst_host" gorm:"type:varchar(50);comment:'目的主机'"`
 	DstPort        int    `bson:"dst_port" json:"dst_port" gorm:"type:int;comment:'目的端口'"`
-	DstAddr        string `bson:"dst_addr" json:"dst_addr" gorm:"type:varchar(100);comment:'目的地址'"`
 	DstCountryName string `bson:"dst_country_name" json:"dst_country_name" gorm:"type:varchar(50);comment:'目的国家名称'"`
 	DstCityName    string `bson:"dst_city_name" json:"dst_city_name" gorm:"type:varchar(50);comment:'目的城市名称'"`
 

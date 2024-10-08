@@ -11,20 +11,16 @@ import (
 	"net"
 )
 
-/*************************************
- Constants
-*************************************/
-
-// HEP ID
+// HEP Versions
 const (
-	HEPID1 = 0x011002
-	HEPID2 = 0x021002
-	HEPID3 = 0x48455033
+	HEP1 byte = 0x01
+	HEP2 byte = 0x02
+	HEP3 byte = 0x48
 )
 
-// Generic Chunk Types
+// HEP3 Chunk Types
 const (
-	_ = iota // Don't want to assign zero here, but want to implicitly repeat this expression after...
+	_ = iota
 	IPProtocolFamily
 	IPProtocolID
 	IP4SourceAddress
@@ -44,66 +40,34 @@ const (
 	InternalC
 )
 
-var protocolFamilies []string
-var vendors []string
-var protocolTypes []string
-
-func init() {
-
-	// Protocol Family Types - HEP3 Spec does not list these values out. Took IPv4 from an example.
-	protocolFamilies = []string{
-		"?",
-		"?",
-		"IPv4"}
-
-	// Initialize vendors
-	vendors = []string{
-		"None",
-		"FreeSWITCH",
-		"Kamailio",
-		"OpenSIPS",
-		"Asterisk",
-		"Homer",
-		"SipXecs",
-	}
-
-	// Initialize protocol types
-	protocolTypes = []string{
-		"Reserved",
-		"SIP",
-		"XMPP",
-		"SDP",
-		"RTP",
-		"RTCP",
-		"MGCP",
-		"MEGACO",
-		"M2UA",
-		"M3UA",
-		"IAX",
-		"H322",
-		"H321",
-	}
-}
-
 // HepMsg represents a parsed HEP packet
 type HepMsg struct {
-	IPProtocolFamily      byte
-	IPProtocolID          byte
-	IP4SourceAddress      string
-	IP4DestinationAddress string
-	IP6SourceAddress      string
-	IP6DestinationAddress string
-	SourcePort            uint16
-	DestinationPort       uint16
-	Timestamp             uint32
-	TimestampMicro        uint32
-	ProtocolType          byte
-	CaptureAgentID        uint16
-	KeepAliveTimer        uint16
-	AuthenticateKey       string
-	Body                  []byte
-	//SipMsg                *siprocket.SipMsg
-	//SipMsg	*sip.SipMsg
+	Version byte   // HEP 协议版本，通常为 3
+	Type    byte   // HEP 消息类型，例如 0 表示 HEP_DATA
+	SubType uint16 // 消息子类型，根据 Type 不同而不同
+
+	Timestamp      uint32 // Unix 时间戳（秒）
+	TimestampMicro uint32 // Unix 时间戳的微秒部分
+
+	CaptureAgentID uint16 // 捕获代理的唯一标识符
+
+	IPProtocolFamily byte // 地址族：1 表示 IPv4，2 表示 IPv6
+	IPProtocolID     byte // 上层协议标识符，例如 6 表示 TCP，17 表示 UDP
+
+	IP4SourceAddress      string // 源 IPv4 地址
+	IP4DestinationAddress string // 目标 IPv4 地址
+
+	IP6SourceAddress      string // 源 IPv6 地址
+	IP6DestinationAddress string // 目标 IPv6 地址
+
+	SourcePort      uint16 // 源端口号
+	DestinationPort uint16 // 目标端口号
+
+	ProtocolType byte // 应用层协议类型，例如 SIP、RTP
+
+	KeepAliveTimer  uint16 // 保持连接活跃的定时器值
+	AuthenticateKey string // 认证密钥（固定长度）
+	Body            []byte // 消息的有效负载
 }
 
 // NewHepMsg returns a parsed message object. Takes a byte slice.
@@ -117,23 +81,21 @@ func NewHepMsg(packet []byte) (*HepMsg, error) {
 }
 
 func (hepMsg *HepMsg) parse(udpPacket []byte) error {
-
 	switch udpPacket[0] {
-	case 0x01:
+	case HEP1:
 		return hepMsg.parseHep1(udpPacket)
-	case 0x02:
+	case HEP2:
 		return hepMsg.parseHep2(udpPacket)
-	case 0x48:
+	case HEP3:
 		return hepMsg.parseHep3(udpPacket)
 	default:
-		err := errors.New("Not a valid HEP packet - HEP ID does not match spec")
-		return err
+		return errors.New("not a valid HEP packet - HEP ID does not match spec")
 	}
 }
 func (hepMsg *HepMsg) parseHep1(udpPacket []byte) error {
 	//var err error
 	if len(udpPacket) < 21 {
-		return errors.New("Found HEP ID for HEP v1, but length of packet is too short to be HEP1 or is NAT keepalive")
+		return errors.New("found HEP ID for HEP v1, but length of packet is too short to be HEP1 or is NAT keepalive")
 	}
 	packetLength := len(udpPacket)
 	hepMsg.SourcePort = binary.BigEndian.Uint16(udpPacket[4:6])
@@ -153,7 +115,7 @@ func (hepMsg *HepMsg) parseHep1(udpPacket []byte) error {
 func (hepMsg *HepMsg) parseHep2(udpPacket []byte) error {
 	//var err error
 	if len(udpPacket) < 31 {
-		return errors.New("Found HEP ID for HEP v2, but length of packet is too short to be HEP2 or is NAT keepalive")
+		return errors.New("found HEP ID for HEP v2, but length of packet is too short to be HEP2 or is NAT keepalive")
 	}
 	packetLength := len(udpPacket)
 	hepMsg.SourcePort = binary.BigEndian.Uint16(udpPacket[4:6])
@@ -174,6 +136,11 @@ func (hepMsg *HepMsg) parseHep2(udpPacket []byte) error {
 }
 
 func (hepMsg *HepMsg) parseHep3(udpPacket []byte) error {
+	if len(udpPacket) < 6 {
+		return errors.New("HEP3 packet too short to contain length field")
+	}
+	hepMsg.Version = 3
+
 	length := binary.BigEndian.Uint16(udpPacket[4:6])
 	currentByte := uint16(6)
 
@@ -183,9 +150,9 @@ func (hepMsg *HepMsg) parseHep3(udpPacket []byte) error {
 		chunkType := binary.BigEndian.Uint16(hepChunk[2:4])
 		chunkLength := binary.BigEndian.Uint16(hepChunk[4:6])
 
-		//todo::实际运行过程中，chunkLength会超过len(hepChunk)，导致下面报错
+		//实际运行过程中，chunkLength会超过len(hepChunk)，所以需要有这个检查
 		if int(chunkLength) > len(hepChunk) {
-			continue
+			return errors.New("HEP3 packet too short to contain length field")
 		}
 
 		chunkBody := hepChunk[6:chunkLength]
@@ -202,7 +169,7 @@ func (hepMsg *HepMsg) parseHep3(udpPacket []byte) error {
 		case IP6SourceAddress:
 			hepMsg.IP6SourceAddress = net.IP(chunkBody).String()
 		case IP6DestinationAddress:
-			hepMsg.IP4DestinationAddress = net.IP(chunkBody).String()
+			hepMsg.IP6DestinationAddress = net.IP(chunkBody).String()
 		case SourcePort:
 			hepMsg.SourcePort = binary.BigEndian.Uint16(chunkBody)
 		case DestinationPort:

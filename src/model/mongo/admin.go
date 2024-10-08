@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 	"fmt"
+
 	"sip-monitor/src/entity"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -102,6 +103,7 @@ func (m *MgInfra) GetSearchFilter(sp entity.SearchParams) bson.M {
 
 func (m *MgInfra) GetDetailsBySipCallID(ctx context.Context, searchParams entity.SearchParams) ([]entity.Record, error) {
 	opt := options.Find().SetSort(bson.D{
+		{"create_time", 1},
 		{"timestamp_micro", 1},
 	})
 	filter := m.GetSearchFilter(searchParams)

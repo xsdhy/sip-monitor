@@ -5,17 +5,17 @@ import (
 	"flag"
 	"fmt"
 	"io/fs"
-	"log/slog"
 	"net/http"
 	"path/filepath"
 
-	"sip-monitor/src/entity"
+	"github.com/sirupsen/logrus"
 	"sip-monitor/src/model"
 	"sip-monitor/src/pkg/env"
+	"sip-monitor/src/services/controller"
+	"sip-monitor/src/services/hep"
+	"sip-monitor/src/services/ip"
 
 	"strings"
-
-	"sip-monitor/src/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -29,38 +29,51 @@ func main() {
 		flag.Parse()
 	}
 
-	model.SaveToDBQueue = make(chan *entity.SIP, 20000)
-	go model.SaveToDBRunner()
+	logger := logrus.New()
+	logger.SetLevel(logrus.DebugLevel)
+
+	//初始化IP库
+	ipServer := ip.NewIPServer()
 
 	//初始化数据库
-	model.DBInit()
-	//初始化IP库
-	services.IPDBInit()
-	//启动HepServer
-	go services.HepServerListener()
+	db, err := model.DBInit(logger)
+	if err != nil {
+		panic(err)
+	}
+
+	hepServer, err := hep.NewHepServer(logger, db, ipServer)
+	if err != nil {
+		panic(err)
+	}
+	go hepServer.Listener()
+	go hepServer.SaveRunner()
+
+	httpServer := controller.NewHttpServer(db)
+
 	//启动定时任务
 	//go services.Cron()
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 
-	authorized := r.Group("/api", gin.BasicAuth(gin.Accounts{"call": "call.2024"}))
+	authorized := r.Group("/api")
+	//authorized := r.Group("/api", gin.BasicAuth(gin.Accounts{"call": "call.2024"}))
 
 	//后端接口
-	authorized.GET("/record/call", services.RecordCallList)
-	authorized.GET("/record/register", services.RecordRegisterList)
-	authorized.GET("/record/details", services.SearchCallID)
-	authorized.GET("/system/db/clean_sip_record", services.CleanSipRecord)
-	authorized.GET("/system/db/stats", services.DbStats)
+	authorized.GET("/record/call", httpServer.RecordCallList)
+	authorized.GET("/record/register", httpServer.RecordRegisterList)
+	authorized.GET("/record/details", httpServer.SearchCallID)
+	authorized.GET("/system/db/clean_sip_record", httpServer.CleanSipRecord)
+	authorized.GET("/system/db/stats", httpServer.DbStats)
 
 	//前端资源
 	r.Use(ServerStatic("web/build", dist))
 
 	serverHost := fmt.Sprintf("0.0.0.0:%d", env.Conf.HTTPListenPort)
-	slog.Info("HttpServerInit", slog.String("host", serverHost))
-	err := r.Run(serverHost)
+	logger.WithField("host", serverHost).Info("HttpServerInit")
+	err = r.Run(serverHost)
 	if err != nil {
-		slog.Error("HttpServerInit Error", err)
+		logger.WithError(err).Error("HttpServerInit Error")
 	}
 }
 

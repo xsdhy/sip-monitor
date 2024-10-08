@@ -1,8 +1,9 @@
 package callbuffer
 
 import (
-	"sip-monitor/src/entity"
 	"time"
+
+	"sip-monitor/src/entity"
 )
 
 type RegBuffer struct {
@@ -37,7 +38,7 @@ func (cb *RegBuffer) Add(item *entity.SIP) *entity.SIPRecordRegister {
 		cb.result.SrcCountryName = item.SrcCountryName
 		cb.result.SrcCityName = item.SrcCityName
 	}
-	switch item.SIPMethod {
+	switch item.Title {
 	case "401", "403":
 		//failures_times++
 		cb.result.FailuresTimes++

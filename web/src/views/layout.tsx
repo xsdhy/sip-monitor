@@ -7,7 +7,6 @@ import zhCN from 'antd/es/locale/zh_CN';
 
 
 import Home from "./home/home";
-import RecordAll from "./record/recordAll";
 import RecordRegister from "./record/register";
 import RecordCall from "./record/call";
 
@@ -25,7 +24,6 @@ const items = [
     {label: '工作台', key: 'home'},
     {label: '注册', key: 'record/register'},
     {label: '呼叫', key: 'record/call'},
-    {label: '消息', key: 'record/all'},
     {label: '数据库', key: 'system/stats'},
 ];
 
@@ -79,7 +77,6 @@ const BackendLayout = () => {
                         <div style={{padding: 10, minHeight:"100vh", background: colorBgContainer}}>
                             <Routes>
                                 <Route path="/" element={<Home/>}/>
-                                <Route path="/record/all" element={<RecordAll/>}/>
                                 <Route path="/record/register" element={<RecordRegister/>}/>
                                 <Route path="/record/call" element={<RecordCall/>}/>
                                 <Route path="/system/stats" element={<SystemStats/>}/>

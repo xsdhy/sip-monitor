@@ -35,18 +35,18 @@ export function isRequest(method: string) {
 export function createSeqHtml(seq: CallRecordEntity[]):string {
     const res: string[] = [`autolabel "[<inc>] <label>"`]
 
-    seq.forEach((item, index) => {
-        let dis = 0
-        if (index !== 0) {
-            dis = seq[index].timestamp_micro/1000000 -seq[index - 1].timestamp_micro/1000000
-        }
-        //箭头:若是请求则->，否则-->
-        const arrowhead = `-${isRequest(item.sip_method) ? '' : '-'}>`
-        //内容
-        const labelContent = `**${item.sip_method}** ${item.response_desc} ${dis.toFixed(1)}s ${stringToColor(item.cseq_number + '')}`
-
-        res.push(`${item.src_addr}${arrowhead}${item.dst_addr}: ${labelContent}`)
-    })
+    // seq.forEach((item, index) => {
+    //     let dis = 0
+    //     if (index !== 0) {
+    //         dis = seq[index].timestamp/1000000 -seq[index - 1].timestamp/1000000
+    //     }
+    //     //箭头:若是请求则->，否则-->
+    //     const arrowhead = `-${isRequest(item.sip_method) ? '' : '-'}>`
+    //     //内容
+    //     const labelContent = `**${item.sip_method}** ${item.response_desc} ${dis.toFixed(1)}s ${stringToColor(item.cseq_number + '')}`
+    //
+    //     res.push(`${item.src}${arrowhead}${item.dst}: ${labelContent}`)
+    // })
 
     res.push('terminators box')
     return res.join('\n')

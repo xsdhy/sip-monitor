@@ -1,15 +1,17 @@
-package services
+package ip
 
 import (
 	_ "embed"
-	"sip-monitor/resources"
 	"testing"
+
+	"sip-monitor/resources"
 
 	"github.com/ipipdotnet/ipdb-go"
 	"github.com/xiaoqidun/qqwry"
 )
 
 func TestGetIPArea(t *testing.T) {
+
 	qqwry.LoadData(resources.QQWryDat)
 	IPDB, _ = ipdb.NewCityFromBytes(resources.IPIPDat)
 

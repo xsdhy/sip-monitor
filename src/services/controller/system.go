@@ -1,4 +1,4 @@
-package services
+package controller
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func CleanSipRecord(c *gin.Context) {
+func (h *HttpServer) CleanSipRecord(c *gin.Context) {
 	var request entity.CleanSipRecordDTO
 	_ = c.ShouldBind(&request)
 	if request.EndTime == nil {
@@ -25,7 +25,7 @@ func CleanSipRecord(c *gin.Context) {
 	util.SendSuccessByMessage(c, fmt.Sprintf("删除成功，共计%d条", deleteResult))
 }
 
-func DbStats(c *gin.Context) {
+func (h *HttpServer) DbStats(c *gin.Context) {
 	res := make([]entity.MongoDBStatsVO, 0, 3)
 
 	statsCallRecords := model.DbStats(c, "call_records")

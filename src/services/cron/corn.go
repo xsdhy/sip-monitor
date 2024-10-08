@@ -1,4 +1,4 @@
-package services
+package cron
 
 import (
 	"log/slog"
