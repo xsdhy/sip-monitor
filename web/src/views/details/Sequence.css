@@ -2,3 +2,75 @@
     stroke-width: 3px;
     stroke: rgba(1, 110, 30, 0.5);
 }
+
+/* 美化时序图整体样式 */
+.sequence-diagram {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin: 20px 0;
+}
+
+/* 美化连接线样式 */
+.sequence-diagram line {
+    stroke-width: 1.5px;
+    stroke: #4a90e2;
+}
+
+/* 美化箭头样式 */
+.sequence-diagram marker {
+    fill: #4a90e2;
+}
+
+/* 美化文本标签样式 */
+.sequence-diagram text {
+    font-size: 13px;
+    fill: #2c3e50;
+    font-weight: 500;
+}
+
+/* 美化参与者框样式 */
+.sequence-diagram rect {
+    fill: #f8f9fa;
+    stroke: #4a90e2;
+    stroke-width: 2px;
+    rx: 6px;
+    ry: 6px;
+}
+
+/* 美化注释框样式 */
+.sequence-diagram .note rect {
+    fill: #fff8dc;
+    stroke: #d4b106;
+    stroke-width: 1px;
+}
+
+.sequence-diagram .note text {
+    fill: #595959;
+    font-size: 12px;
+}
+
+/* 鼠标悬停效果 */
+.sequence-diagram .region:hover .outline {
+    stroke: rgba(74, 144, 226, 0.6);
+    stroke-width: 2.5px;
+    transition: all 0.3s ease;
+}
+
+/* 消息线条动画效果 */
+.sequence-diagram .connect {
+    animation: drawLine 0.6s ease-out forwards;
+}
+
+@keyframes drawLine {
+    from {
+        stroke-dashoffset: 100%;
+        stroke-dasharray: 20;
+    }
+    to {
+        stroke-dashoffset: 0;
+        stroke-dasharray: 0;
+    }
+}

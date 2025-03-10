@@ -43,7 +43,7 @@ export default function SequenceDiagram(p: Prop) {
         diagram.addEventListener('click', (e: any) => {
             if (e.type === 'connect') {
                 diagram.setHighlight(e.ln)
-                setSeqMessageItem(seq[e.ln-1])
+                setSeqMessageItem(seq[e.ln])
                 setSeqMessageItemModelShow(true)
             }
         })

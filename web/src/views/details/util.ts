@@ -33,19 +33,38 @@ export function isRequest(method: string) {
 
 //https://sequence.davidje13.com/library.htm
 export function createSeqHtml(seq: CallRecordEntity[]):string {
-    const res: string[] = [`autolabel "[<inc>] <label>"`]
+    const res: string[] = [
+        `autolabel "[<inc>] <label>"`,
+        `theme modern`
+    ]
 
     seq.forEach((item, index) => {
         let dis = 0
         if (index !== 0) {
             dis = seq[index].timestamp_micro/1000000 -seq[index - 1].timestamp_micro/1000000
         }
-        //箭头:若是请求则->，否则-->
         const arrowhead = `-${isRequest(item.sip_method) ? '' : '-'}>`
-        //内容
-        const labelContent = `**${item.sip_method}** ${item.response_desc} ${dis.toFixed(1)}s ${stringToColor(item.cseq_number + '')}`
+        const methodColor = stringToColor(item.sip_method)
 
-        res.push(`${item.src_addr}${arrowhead}${item.dst_addr}: ${labelContent}`)
+        let labelContent = `"${item.sip_method} "`
+
+        if (item.sip_method === 'INVITE') {
+            labelContent +=`"${item.from_user} -> ${item.to_user}"`
+        }
+        labelContent +=`"${item.response_desc}\\n${dis.toFixed(2)}s"`
+
+
+        // 为不同类型的消息使用不同的样式
+        if (isRequest(item.sip_method)) {
+            res.push(`${item.src_addr}${arrowhead}${item.dst_addr}: ${labelContent}`)
+        } else {
+            res.push(`${item.src_addr}${arrowhead}${item.dst_addr}: ${labelContent}`)
+        }
+        
+        // 只在关键时间点添加时间戳注释
+        if (index === 0 || dis > 1) {
+            res.push(`note over ${item.src_addr}: "${new Date(item.timestamp_micro/1000).toLocaleTimeString()}"`)
+        }
     })
 
     res.push('terminators box')
