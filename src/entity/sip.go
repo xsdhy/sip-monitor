@@ -32,17 +32,13 @@ type SIP struct {
 	CSeqMethod      string
 	UserAgent       string
 
-	SrcHost        string
-	SrcPort        int
-	SrcAddr        string
-	SrcCountryName string
-	SrcCityName    string
+	SrcHost string
+	SrcPort int
+	SrcAddr string
 
-	DstHost        string
-	DstPort        int
-	DstAddr        string
-	DstCountryName string
-	DstCityName    string
+	DstHost string
+	DstPort int
+	DstAddr string
 
 	CreateAt       time.Time
 	TimestampMicro uint32

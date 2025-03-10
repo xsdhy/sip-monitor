@@ -38,25 +38,10 @@ function RecordAll() {
             title: '来源',
             dataIndex: 'src_host',
             render: (_, record) => {
-                return <div>{record.src_host}({ShowIPText(record.src_country_name,record.src_city_name)})</div>
+                return <div>{record.src_addr}<br/>{record.dst_addr}</div>
             },
         },
-
-
-
-        {
-            title: '目标',
-            dataIndex: 'dst_host',
-            render: (_, record) => {
-                return <div>{record.dst_host}({ShowIPText(record.dst_country_name,record.dst_city_name)})</div>
-            },
-        },
-        {
-            title: 'UA',
-            dataIndex: 'user_agent',
-            key: 'user_agent',
-            ellipsis: true,
-        },
+ 
 
         {
             title: '时间',

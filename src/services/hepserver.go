@@ -164,17 +164,13 @@ func ParseSaveOld(b []byte, ip net.IP) {
 		SIPProtocol:  uint(s.Protocol),
 		UserAgent:    ua,
 
-		SrcHost:        s.SrcHost,
-		SrcPort:        s.SrcPort,
-		SrcAddr:        s.SrcAddr,
-		SrcCityName:    s.SrcCityName,
-		SrcCountryName: s.SrcCountryName,
+		SrcHost: s.SrcHost,
+		SrcPort: s.SrcPort,
+		SrcAddr: s.SrcAddr,
 
-		DstHost:        s.DstHost,
-		DstPort:        s.DstPort,
-		DstAddr:        s.DstAddr,
-		DstCityName:    s.DstCityName,
-		DstCountryName: s.DstCountryName,
+		DstHost: s.DstHost,
+		DstPort: s.DstPort,
+		DstAddr: s.DstAddr,
 
 		CreateTime:     s.CreateAt,
 		TimestampMicro: s.CreateAt.Add(time.Microsecond * time.Duration(s.TimestampMicro)).UnixMicro(),
@@ -255,12 +251,10 @@ func Format(p []byte) (s *entity.SIP, errorType string, errMsg string) {
 	sip.SrcAddr = fmt.Sprintf("%s_%d", hepMsg.IP4SourceAddress, hepMsg.SourcePort)
 	sip.SrcPort = int(hepMsg.SourcePort)
 	sip.SrcHost = hepMsg.IP4SourceAddress
-	sip.SrcCountryName, sip.SrcCityName, _ = GetIPArea(hepMsg.IP4SourceAddress)
 
 	sip.DstAddr = fmt.Sprintf("%s_%d", hepMsg.IP4DestinationAddress, hepMsg.DestinationPort)
 	sip.DstHost = hepMsg.IP4DestinationAddress
 	sip.DstPort = int(hepMsg.DestinationPort)
-	sip.DstCountryName, sip.DstCityName, _ = GetIPArea(hepMsg.IP4DestinationAddress)
 
 	sip.NodeID = strconv.Itoa(int(hepMsg.CaptureAgentID))
 

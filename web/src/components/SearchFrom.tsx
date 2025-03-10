@@ -68,7 +68,7 @@ export function SearchForm(p: Prop) {
         >
             <Row gutter={24}>
                 <Form.Item<CallRecordListDTO> style={formItemStyle} label="CALL_ID" name="sip_call_id"><Input allowClear/></Form.Item>
-                <Form.Item<CallRecordListDTO> style={formItemStyle} label="节点IP" name="node_ip"><Input allowClear/></Form.Item>
+                {/* <Form.Item<CallRecordListDTO> style={formItemStyle} label="节点IP" name="node_ip"><Input allowClear/></Form.Item> */}
 
                 <Form.Item<CallRecordListDTO> style={formItemStyle} label="SIPMethod">
                     <Space.Compact>
@@ -78,20 +78,20 @@ export function SearchForm(p: Prop) {
                 </Form.Item>
 
 
-                <Form.Item<CallRecordListDTO> style={formItemStyle} label="ResponseCode">
+                {/* <Form.Item<CallRecordListDTO> style={formItemStyle} label="ResponseCode">
                     <Space.Compact>
                         <Form.Item name="response_code_opr"><Select style={formSelectItemStyle} defaultValue="eq" options={SelectConvOptions}/></Form.Item>
                         <Form.Item name="response_code"><Input style={{width:80}} allowClear/></Form.Item>
                     </Space.Compact>
-                </Form.Item>
+                </Form.Item> */}
 
 
-                <Form.Item<CallRecordListDTO> style={formItemStyle} label="UA">
+                {/* <Form.Item<CallRecordListDTO> style={formItemStyle} label="UA">
                     <Space.Compact>
                         <Form.Item name="ua_opr"><Select style={formSelectItemStyle} defaultValue="eq" options={SelectConvOptions}/></Form.Item>
                         <Form.Item name="ua"><Input allowClear/></Form.Item>
                     </Space.Compact>
-                </Form.Item>
+                </Form.Item> */}
 
 
                 <Form.Item<CallRecordListDTO> style={formItemStyle} label="主叫">
@@ -106,19 +106,7 @@ export function SearchForm(p: Prop) {
                         <Form.Item name="src_host"><Input allowClear/></Form.Item>
                     </Space.Compact>
                 </Form.Item>
-                <Form.Item<CallRecordListDTO> style={formItemStyle} label="来源国家">
-                    <Space.Compact>
-                        <Form.Item name="src_country_name_opr"><Select style={formSelectItemStyle} defaultValue="eq" options={SelectConvOptions}/></Form.Item>
-                        <Form.Item name="src_country_name"><Input allowClear/></Form.Item>
-                    </Space.Compact>
-                </Form.Item>
 
-                <Form.Item<CallRecordListDTO> style={formItemStyle} label="来源城市">
-                    <Space.Compact>
-                        <Form.Item name="src_city_name_opr"><Select style={formSelectItemStyle} defaultValue="eq" options={SelectConvOptions}/></Form.Item>
-                        <Form.Item name="src_city_name"><Input allowClear/></Form.Item>
-                    </Space.Compact>
-                </Form.Item>
 
                 <Form.Item<CallRecordListDTO> style={formItemStyle} label="被叫">
                     <Space.Compact>
@@ -133,19 +121,7 @@ export function SearchForm(p: Prop) {
                     </Space.Compact>
                 </Form.Item>
 
-                <Form.Item<CallRecordListDTO> style={formItemStyle} label="目标国家">
-                    <Space.Compact>
-                        <Form.Item name="dst_country_name_opr"><Select style={formSelectItemStyle} defaultValue="eq" options={SelectConvOptions}/></Form.Item>
-                        <Form.Item name="dst_country_name"><Input allowClear/></Form.Item>
-                    </Space.Compact>
-                </Form.Item>
-
-                <Form.Item<CallRecordListDTO> style={formItemStyle} label="目标城市">
-                    <Space.Compact>
-                        <Form.Item name="dst_city_name_opr"><Select style={formSelectItemStyle} defaultValue="eq" options={SelectConvOptions}/></Form.Item>
-                        <Form.Item name="dst_city_name"><Input allowClear/></Form.Item>
-                    </Space.Compact>
-                </Form.Item>
+               
 
                 <Form.Item<CallRecordListDTO> style={formItemStyle} label="时间" name="date_picker">
                     <RangePicker

@@ -43,15 +43,10 @@ export interface CallRecordEntity {
     user_agent: string
     src_addr: string
     src_host: string
-    src_city_name: string
-    src_country_name: string
     dst_addr: string
     dst_host: string
-    dst_country_name: string
-    dst_city_name: string
     timestamp_micro: number
     raw_msg: string
-
 }
 
 
