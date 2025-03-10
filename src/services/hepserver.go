@@ -106,12 +106,10 @@ func ParseSaveNew(b []byte, ip net.IP) *entity.Record {
 	item.SrcAddr = fmt.Sprintf("%s_%d", msg.SipMsg.From.Host, msg.SipMsg.From.Port)
 	item.SrcHost = string(msg.SipMsg.From.Host)
 	item.SrcPort = BytesToInt(msg.SipMsg.From.Port)
-	item.SrcCountryName, item.SrcCityName, _ = GetIPArea(item.SrcHost)
 
 	item.DstAddr = fmt.Sprintf("%s_%d", msg.SipMsg.To.Host, msg.SipMsg.To.Port)
 	item.DstHost = string(msg.SipMsg.From.Host)
 	item.DstPort = BytesToInt(msg.SipMsg.From.Port)
-	item.DstCountryName, item.DstCityName, _ = GetIPArea(item.SrcHost)
 
 	//model.Save(item,len(msg.SipMsg.Via))
 	return &item
@@ -180,8 +178,6 @@ func ParseSaveOld(b []byte, ip net.IP) {
 	}
 
 	model.SaveToDBQueue <- item
-	//model.Save(item, len(output.Via))
-	return
 }
 
 func Format(p []byte) (s *entity.SIP, errorType string, errMsg string) {

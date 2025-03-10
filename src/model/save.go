@@ -41,8 +41,6 @@ func upsertSIPRecordCallInviteV3(record entity.Record, viaNum int) {
 			{"dst_host", record.DstHost},
 			{"dst_port", record.DstPort},
 			{"dst_addr", record.DstAddr},
-			{"dst_country_name", record.DstCountryName},
-			{"dst_city_name", record.DstCityName},
 		}
 	} else {
 		updateItems = bson.D{
@@ -57,14 +55,10 @@ func upsertSIPRecordCallInviteV3(record entity.Record, viaNum int) {
 			{"src_host", record.SrcHost},
 			{"src_port", record.SrcPort},
 			{"src_addr", record.SrcAddr},
-			{"src_country_name", record.SrcCountryName},
-			{"src_city_name", record.SrcCityName},
 
 			{"dst_host", record.DstHost},
 			{"dst_port", record.DstPort},
 			{"dst_addr", record.DstAddr},
-			{"dst_country_name", record.DstCountryName},
-			{"dst_city_name", record.DstCityName},
 
 			{"create_time", record.CreateTime},
 		}
@@ -105,11 +99,9 @@ func Save(item entity.Record, viaNum int) {
 			FromUser:   item.FromUser,
 			UserAgent:  item.UserAgent,
 
-			SrcHost:        item.SrcHost,
-			SrcPort:        item.SrcPort,
-			SrcAddr:        item.SrcAddr,
-			SrcCountryName: item.SrcCountryName,
-			SrcCityName:    item.SrcCityName,
+			SrcHost: item.SrcHost,
+			SrcPort: item.SrcPort,
+			SrcAddr: item.SrcAddr,
 		})
 		_ = bson.Unmarshal(conv, &updateFields)
 

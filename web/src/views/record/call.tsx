@@ -56,7 +56,8 @@ function RecordCall() {
                 return <div>
                     {record.create_time ? "创建:"+dayjs(record.create_time).format('YYYY-MM-DD HH:mm:ss') : ""}
                     <br/>
-                    {record.ringing_time ? "振铃:"+dayjs(record.ringing_time).format('YYYY-MM-DD HH:mm:ss') : ""}
+                    {record.end_time ? "结束:"+dayjs(record.end_time).format('YYYY-MM-DD HH:mm:ss') : ""}
+                    
                     </div>
             },
         },
@@ -66,9 +67,9 @@ function RecordCall() {
             width: 240,
             render: (_, record) => {
                 return <div>
-                    {record.answer_time ? "应答:"+dayjs(record.answer_time).format('YYYY-MM-DD HH:mm:ss') : ""}
+                    {record.ringing_time ? "振铃:"+dayjs(record.ringing_time).format('YYYY-MM-DD HH:mm:ss') : ""}
                     <br/>
-                    {record.end_time ? "结束:"+dayjs(record.end_time).format('YYYY-MM-DD HH:mm:ss') : ""}
+                    {record.answer_time ? "应答:"+dayjs(record.answer_time).format('YYYY-MM-DD HH:mm:ss') : ""}
                     </div>
             },
         },

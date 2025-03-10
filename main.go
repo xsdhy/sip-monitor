@@ -39,7 +39,7 @@ func main() {
 	//启动HepServer
 	go services.HepServerListener()
 	//启动定时任务
-	go services.Cron()
+	// go services.Cron()
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()

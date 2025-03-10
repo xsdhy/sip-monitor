@@ -70,12 +70,12 @@ export function SearchForm(p: Prop) {
                 <Form.Item<CallRecordListDTO> style={formItemStyle} label="CALL_ID" name="sip_call_id"><Input allowClear/></Form.Item>
                 {/* <Form.Item<CallRecordListDTO> style={formItemStyle} label="节点IP" name="node_ip"><Input allowClear/></Form.Item> */}
 
-                <Form.Item<CallRecordListDTO> style={formItemStyle} label="SIPMethod">
+                {/* <Form.Item<CallRecordListDTO> style={formItemStyle} label="SIPMethod">
                     <Space.Compact>
                         <Form.Item name="sip_method_opr"><Select style={formSelectItemStyle} defaultValue="eq" options={SelectConvOptions}/></Form.Item>
                         <Form.Item name="sip_method"><Input style={{width:80}} allowClear/></Form.Item>
                     </Space.Compact>
-                </Form.Item>
+                </Form.Item> */}
 
 
                 {/* <Form.Item<CallRecordListDTO> style={formItemStyle} label="ResponseCode">

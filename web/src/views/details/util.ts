@@ -1,5 +1,5 @@
 import {CallRecordEntity} from '../../@types/entity'
-
+import dayjs from "dayjs";
 
 export function getProtocolName(num: number):string {
     if (num === 6) {return 'TCP'}
@@ -31,42 +31,33 @@ export function isRequest(method: string) {
 }
 
 
-//https://sequence.davidje13.com/library.htm
-export function createSeqHtml(seq: CallRecordEntity[]):string {
+
+export function createSeqHtml(seq: CallRecordEntity[]): string {
     const res: string[] = [
-        `autolabel "[<inc>] <label>"`,
-        `theme modern`
+        'sequenceDiagram'
     ]
 
     seq.forEach((item, index) => {
         let dis = 0
         if (index !== 0) {
-            dis = seq[index].timestamp_micro/1000000 -seq[index - 1].timestamp_micro/1000000
-        }
-        const arrowhead = `-${isRequest(item.sip_method) ? '' : '-'}>`
-        const methodColor = stringToColor(item.sip_method)
-
-        let labelContent = `"${item.sip_method} "`
-
-        if (item.sip_method === 'INVITE') {
-            labelContent +=`"${item.from_user} -> ${item.to_user}"`
-        }
-        labelContent +=`"${item.response_desc}\\n${dis.toFixed(2)}s"`
-
-
-        // 为不同类型的消息使用不同的样式
-        if (isRequest(item.sip_method)) {
-            res.push(`${item.src_addr}${arrowhead}${item.dst_addr}: ${labelContent}`)
-        } else {
-            res.push(`${item.src_addr}${arrowhead}${item.dst_addr}: ${labelContent}`)
+            dis = seq[index].timestamp_micro/1000000 - seq[index - 1].timestamp_micro/1000000
         }
         
-        // 只在关键时间点添加时间戳注释
+        const arrow = isRequest(item.sip_method) ? '->>' : '-->>'
+        let messageText = `${item.sip_method} `
+        
+        if (item.sip_method === 'INVITE') {
+            messageText += `${item.from_user} -> ${item.to_user} `
+        }
+        messageText += `${item.response_desc} ${dis.toFixed(2)}s`
+
+        res.push(`${item.src_addr}${arrow}${item.dst_addr}: ${messageText}`)
+        
+        // 添加时间戳注释
         if (index === 0 || dis > 1) {
-            res.push(`note over ${item.src_addr}: "${new Date(item.timestamp_micro/1000).toLocaleTimeString()}"`)
+            res.push(`Note over ${item.src_addr}: ${dayjs(item.timestamp_micro/1000).format('YYYY-MM-DD HH:mm:ss')}`)
         }
     })
 
-    res.push('terminators box')
     return res.join('\n')
 }

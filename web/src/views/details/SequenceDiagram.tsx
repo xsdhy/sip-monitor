@@ -1,9 +1,8 @@
 import {useEffect, useRef, useState} from 'react'
 import {Tag, Spin, Modal, Empty} from 'antd'
-import './Sequence.css'
 
 
-import * as ssd from 'svg-sequence-diagram'
+import mermaid from 'mermaid'
 import {createSeqHtml, getProtocolName} from './util'
 import {CallRecordDetailsVO, CallRecordEntity} from '../../@types/entity'
 import AppAxios from "../../utils/request";
@@ -36,28 +35,53 @@ export default function SequenceDiagram(p: Prop) {
     }
 
     useEffect(() => {
-        const diagram = new ssd.SequenceDiagram()
-        const dom = createSeqHtml(seq)
+        if (seq.length > 0 && ssdRef.current) {
+            // 初始化 mermaid
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: 'default',
+                sequence: {
+                    diagramMarginX: 50,
+                    diagramMarginY: 10,
+                    actorMargin: 50,
+                    width: 150,
+                    height: 65,
+                    boxMargin: 10,
+                    boxTextMargin: 5,
+                    noteMargin: 10,
+                    messageMargin: 35
+                }
+            })
 
-        diagram.set(dom)
-        diagram.addEventListener('click', (e: any) => {
-            if (e.type === 'connect') {
-                diagram.setHighlight(e.ln)
-                setSeqMessageItem(seq[e.ln])
-                setSeqMessageItemModelShow(true)
-            }
-        })
+            // 清除之前的内容
+            ssdRef.current.innerHTML = ''
+            
+            // 创建新的图表容器
+            const container = document.createElement('div')
+            container.className = 'mermaid'
+            container.innerHTML = createSeqHtml(seq)
+            ssdRef.current.appendChild(container)
+            
+            // 渲染图表
+            // mermaid.contentLoaded = false
+            mermaid.init({ sequence: { showSequenceNumbers: true } }, '.mermaid')
 
-        if (ssdRef.current !== null) {
-            ssdRef.current.appendChild(diagram.dom())
+            // 添加点击事件
+            container.addEventListener('click', (e) => {
+                const target = e.target as HTMLElement
+                if (target.closest('.messageText')) {
+                    const index = parseInt(target.getAttribute('data-index') || '0')
+                    setSeqMessageItem(seq[index])
+                    setSeqMessageItemModelShow(true)
+                }
+            })
         }
 
-        //组件卸载时执行的清理逻辑
         return () => {
-            diagram.removeAllEventListeners()
-            if (ssdRef.current) ssdRef.current.innerHTML = ''
+            if (ssdRef.current) {
+                ssdRef.current.innerHTML = ''
+            }
         }
-
     }, [seq])
 
     useEffect(() => {

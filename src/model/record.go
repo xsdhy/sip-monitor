@@ -55,22 +55,6 @@ func GetSearchFilter(sp entity.SearchParams) bson.M {
 		}
 	}
 
-	if sp.SrcCountryName != "" {
-		if sp.SrcCountryNameOpr == "neq" {
-			filter["src_country_name"] = bson.M{"$regex": fmt.Sprintf(MgWhereNotContain, sp.SrcCountryName)}
-		} else {
-			filter["src_country_name"] = bson.M{"$regex": fmt.Sprintf(MgWhereContain, sp.SrcCountryName)}
-		}
-	}
-
-	if sp.SrcCityName != "" {
-		if sp.SrcCityNameOpr == "neq" {
-			filter["src_city_name"] = bson.M{"$regex": fmt.Sprintf(MgWhereNotContain, sp.SrcCityName)}
-		} else {
-			filter["src_city_name"] = bson.M{"$regex": fmt.Sprintf(MgWhereContain, sp.SrcCityName)}
-		}
-	}
-
 	if sp.ToUser != "" {
 		if sp.ToUserOpr == "neq" {
 			filter["to_user"] = bson.M{"$regex": fmt.Sprintf(MgWhereNotContain, sp.ToUser)}
@@ -84,22 +68,6 @@ func GetSearchFilter(sp entity.SearchParams) bson.M {
 			filter["dst_host"] = bson.M{"$ne": sp.DstHost}
 		} else {
 			filter["dst_host"] = sp.DstHost
-		}
-	}
-
-	if sp.DstCountryName != "" {
-		if sp.DstCountryNameOpr == "neq" {
-			filter["dst_country_name"] = bson.M{"$regex": fmt.Sprintf(MgWhereNotContain, sp.DstCountryName)}
-		} else {
-			filter["dst_country_name"] = bson.M{"$regex": fmt.Sprintf(MgWhereContain, sp.DstCountryName)}
-		}
-	}
-
-	if sp.DstCityName != "" {
-		if sp.DstCityNameOpr == "neq" {
-			filter["dst_city_name"] = bson.M{"$regex": fmt.Sprintf(MgWhereNotContain, sp.DstCityName)}
-		} else {
-			filter["dst_city_name"] = bson.M{"$regex": fmt.Sprintf(MgWhereContain, sp.DstCityName)}
 		}
 	}
 

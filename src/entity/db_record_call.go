@@ -48,17 +48,13 @@ type SIPRecordCallSaveDB struct {
 
 	UserAgent string `bson:"user_agent" json:"user_agent"`
 
-	SrcHost        string `bson:"src_host" json:"src_host"`
-	SrcPort        int    `bson:"src_port" json:"src_port"`
-	SrcAddr        string `bson:"src_addr" json:"src_addr"`
-	SrcCountryName string `bson:"src_country_name" json:"src_country_name"`
-	SrcCityName    string `bson:"src_city_name" json:"src_city_name"`
+	SrcHost string `bson:"src_host" json:"src_host"`
+	SrcPort int    `bson:"src_port" json:"src_port"`
+	SrcAddr string `bson:"src_addr" json:"src_addr"`
 
-	DstHost        string `bson:"dst_host" json:"dst_host"`
-	DstPort        int    `bson:"dst_port" json:"dst_port"`
-	DstAddr        string `bson:"dst_addr" json:"dst_addr"`
-	DstCountryName string `bson:"dst_country_name" json:"dst_country_name"`
-	DstCityName    string `bson:"dst_city_name" json:"dst_city_name"`
+	DstHost string `bson:"dst_host" json:"dst_host"`
+	DstPort int    `bson:"dst_port" json:"dst_port"`
+	DstAddr string `bson:"dst_addr" json:"dst_addr"`
 
 	CreateTime time.Time `bson:"create_time" json:"create_time"`
 }
