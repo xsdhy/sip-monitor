@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io/fs"
-	"log/slog"
 	"net/http"
 	"path/filepath"
 
@@ -18,6 +17,7 @@ import (
 	"sip-monitor/src/services"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 //go:embed web/build
@@ -29,7 +29,7 @@ func main() {
 		flag.Parse()
 	}
 
-	model.SaveToDBQueue = make(chan entity.Record, 20000)
+	model.SaveToDBQueue = make(chan entity.SIP, 20000)
 	go model.SaveToDBRunner()
 
 	//初始化数据库
@@ -58,10 +58,10 @@ func main() {
 	r.Use(ServerStatic("web/build", dist))
 
 	serverHost := fmt.Sprintf("0.0.0.0:%d", env.Conf.HTTPListenPort)
-	slog.Info("HttpServerInit", slog.String("host", serverHost))
+	logrus.WithField("host", serverHost).Info("HttpServerInit")
 	err := r.Run(serverHost)
 	if err != nil {
-		slog.Error("HttpServerInit Error", err)
+		logrus.WithError(err).Error("HttpServerInit Error")
 	}
 }
 

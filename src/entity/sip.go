@@ -14,6 +14,7 @@ const (
 
 type SIP struct {
 	NodeID   string
+	NodeIP   string
 	NodeName string
 
 	Title           string // Method or Status
@@ -40,10 +41,13 @@ type SIP struct {
 	DstPort int
 	DstAddr string
 
-	CreateAt       time.Time
-	TimestampMicro uint32
-	Protocol       int
-	UID            string  // correlative id for AB call leg
-	FSCallID       string  // freeswitch CallID
-	Raw            *string // raw sip message
+	CreateAt               time.Time
+	TimestampMicro         uint32
+	TimestampMicroWithDate int64
+	Protocol               int
+	UID                    string  // correlative id for AB call leg
+	FSCallID               string  // freeswitch CallID
+	Raw                    *string // raw sip message
+
+	ViaNum int
 }

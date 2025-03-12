@@ -1,19 +1,19 @@
 package services
 
 import (
-	"log/slog"
 	"time"
 
 	"sip-monitor/src/model"
 
 	"github.com/robfig/cron/v3"
+	"github.com/sirupsen/logrus"
 )
 
 func Cron() {
 	c := cron.New()
 	_, err := c.AddFunc("@every 1h", DailyDelete)
 	if err != nil {
-		slog.Error("定时任务添加失败:", err)
+		logrus.WithError(err).Error("定时任务添加失败")
 	}
 	c.Start()
 }
@@ -24,7 +24,7 @@ func DailyDelete() {
 
 	allRecordNum, err := model.CleanSipALL(&day)
 	if err != nil {
-		slog.Error("DailyDelete CleanSipRecord error:", err)
+		logrus.WithError(err).Error("DailyDelete CleanSipRecord error")
 	}
-	slog.Info("DailyDelete SipRecord ", slog.Int64("total", allRecordNum))
+	logrus.WithField("total", allRecordNum).Info("DailyDelete SipRecord ")
 }

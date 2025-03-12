@@ -2,11 +2,11 @@ package services
 
 import (
 	"fmt"
-	"log/slog"
 	"sip-monitor/resources"
 
 	"github.com/ipipdotnet/ipdb-go"
 	"github.com/pupuk/addr"
+	"github.com/sirupsen/logrus"
 	"github.com/xiaoqidun/qqwry"
 )
 
@@ -16,9 +16,9 @@ func IPDBInit() {
 	var err error
 	IPDB, err = ipdb.NewCityFromBytes(resources.IPIPDat)
 	if err != nil {
-		slog.Error("IPAddressDatabaseInit ipip Error", slog.Any("err", err))
+		logrus.WithError(err).Error("IPAddressDatabaseInit ipip Error")
 	} else {
-		slog.Info("IPAddressDatabaseInit ipip Success")
+		logrus.Info("IPAddressDatabaseInit ipip Success")
 	}
 	qqwry.LoadData(resources.QQWryDat)
 }

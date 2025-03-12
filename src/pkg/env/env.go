@@ -1,10 +1,8 @@
 package env
 
 import (
-	"fmt"
-	"log/slog"
-
 	"github.com/caarlos0/env/v10"
+	"github.com/sirupsen/logrus"
 )
 
 type config struct {
@@ -32,7 +30,7 @@ var Conf = config{}
 func init() {
 	err := env.Parse(&Conf)
 	if err != nil {
-		slog.Error("%+v\n", err)
+		logrus.WithError(err).Error("env.Parse error")
 	}
-	slog.Debug(fmt.Sprintf("%#v\n", Conf))
+	logrus.Debugf("%#v\n", Conf)
 }
