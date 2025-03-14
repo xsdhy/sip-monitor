@@ -1,9 +1,15 @@
 package parser
 
 import (
+	"errors"
+	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
+	"sip-monitor/src/config"
 	"sip-monitor/src/entity"
+	"sip-monitor/src/pkg/hep"
 	"sip-monitor/src/pkg/util"
 )
 
@@ -22,49 +28,115 @@ const (
 const EmptyStr = ""
 
 type Parser struct {
-	entity.SIP
+	cfg    *config.Config
+	hepMsg *hep.HepMsg
+	sip    entity.SIP
+}
+
+func NewParser(cfg *config.Config, hepMsg *hep.HepMsg) *Parser {
+	raw := string(hepMsg.Body)
+	return &Parser{
+		cfg:    cfg,
+		hepMsg: hepMsg,
+		sip: entity.SIP{
+			Raw: &raw,
+		},
+	}
+}
+
+func (p *Parser) ParseSIPMsg() (s *entity.SIP, err error) {
+	p.ParseCseq()
+	if p.sip.CSeqMethod == "" {
+		return nil, errors.New("cseq_is_empty")
+	}
+	if strings.Contains(p.cfg.DiscardMethods, p.sip.CSeqMethod) {
+		return nil, errors.New("method_discarded")
+	}
+
+	p.ParseCallID()
+	if p.sip.CallID == "" {
+		return nil, errors.New("callid_is_empty")
+	}
+
+	p.ParseFirstLine()
+	if p.sip.Title == "" {
+		return nil, errors.New("title_is_empty")
+	}
+
+	if p.sip.RequestURL != "" {
+		p.ParseRequestURL()
+	}
+
+	p.ParseFrom()
+	p.ParseTo()
+	p.ParseUserAgent()
+	p.sip.CreateAt = time.Unix(int64(p.hepMsg.Timestamp), 0)
+	p.sip.TimestampMicro = p.hepMsg.TimestampMicro
+	p.sip.TimestampMicroWithDate = p.sip.CreateAt.Add(time.Microsecond * time.Duration(p.sip.TimestampMicro)).UnixMicro()
+
+	if p.cfg.HeaderFSCallIDName != "" {
+		p.ParseFSCallID(p.cfg.HeaderFSCallIDName)
+	}
+
+	if p.cfg.HeaderUIDName != "" {
+		p.ParseUID(p.cfg.HeaderUIDName)
+	}
+
+	p.sip.Protocol = int(p.hepMsg.IPProtocolID)
+
+	p.sip.SrcAddr = fmt.Sprintf("%s_%d", p.hepMsg.IP4SourceAddress, p.hepMsg.SourcePort)
+	p.sip.SrcPort = int(p.hepMsg.SourcePort)
+	p.sip.SrcHost = p.hepMsg.IP4SourceAddress
+
+	p.sip.DstAddr = fmt.Sprintf("%s_%d", p.hepMsg.IP4DestinationAddress, p.hepMsg.DestinationPort)
+	p.sip.DstHost = p.hepMsg.IP4DestinationAddress
+	p.sip.DstPort = int(p.hepMsg.DestinationPort)
+
+	p.sip.NodeID = strconv.Itoa(int(p.hepMsg.CaptureAgentID))
+
+	return &p.sip, nil
 }
 
 // Request 	: INVITE bob@example.com SIP/2.0
 // Response 	: SIP/2.0 200 OK
 // Response	: SIP/2.0 501 Not Implemented
 func (p *Parser) ParseFirstLine() {
-	if p.Raw == nil {
+	if p.sip.Raw == nil {
 		return
 	}
-	if *p.Raw == EmptyStr {
+	if *p.sip.Raw == EmptyStr {
 		return
 	}
 
-	firstLineIndex := strings.Index(*p.Raw, CRLF)
+	firstLineIndex := strings.Index(*p.sip.Raw, CRLF)
 	if firstLineIndex == -1 {
 		return
 	}
-	firstLine := (*p.Raw)[:firstLineIndex]
+	firstLine := (*p.sip.Raw)[:firstLineIndex]
 	firstLineMeta := strings.SplitN(firstLine, " ", 3)
 
 	if len(firstLineMeta) != 3 {
 		return
 	}
 	if strings.HasPrefix(firstLineMeta[0], "SIP") {
-		p.IsRequest = false
-		p.Title = firstLineMeta[1]
-		p.ResponseCode = util.StrToInt(firstLineMeta[1])
-		p.ResponseDesc = firstLineMeta[2]
+		p.sip.IsRequest = false
+		p.sip.Title = firstLineMeta[1]
+		p.sip.ResponseCode = util.StrToInt(firstLineMeta[1])
+		p.sip.ResponseDesc = firstLineMeta[2]
 		return
 	}
-	p.IsRequest = true
-	p.Title = firstLineMeta[0]
-	p.RequestURL = firstLineMeta[1]
+	p.sip.IsRequest = true
+	p.sip.Title = firstLineMeta[0]
+	p.sip.RequestURL = firstLineMeta[1]
 }
 
 func (p *Parser) ParseRequestURL() {
-	if p.RequestURL == "" {
+	if p.sip.RequestURL == "" {
 		return
 	}
-	user, domain := ParseSIPURL(p.RequestURL)
-	p.RequestDomain = domain
-	p.RequestUsername = user
+	user, domain := ParseSIPURL(p.sip.RequestURL)
+	p.sip.RequestDomain = domain
+	p.sip.RequestUsername = user
 }
 
 func (p *Parser) ParseFrom() {
@@ -73,8 +145,8 @@ func (p *Parser) ParseFrom() {
 		return
 	}
 	user, domain := ParseSIPURL(v)
-	p.FromUsername = user
-	p.FromDomain = domain
+	p.sip.FromUsername = user
+	p.sip.FromDomain = domain
 }
 
 func (p *Parser) ParseTo() {
@@ -83,8 +155,8 @@ func (p *Parser) ParseTo() {
 		return
 	}
 	user, domain := ParseSIPURL(v)
-	p.ToUsername = user
-	p.ToDomain = domain
+	p.sip.ToUsername = user
+	p.sip.ToDomain = domain
 }
 
 func (p *Parser) ParseUserAgent() {
@@ -92,7 +164,7 @@ func (p *Parser) ParseUserAgent() {
 	if v == EmptyStr {
 		return
 	}
-	p.UserAgent = v
+	p.sip.UserAgent = v
 }
 
 func (p *Parser) ParseCallID() {
@@ -100,7 +172,7 @@ func (p *Parser) ParseCallID() {
 	if v == EmptyStr {
 		return
 	}
-	p.CallID = v
+	p.sip.CallID = v
 }
 
 // "Bob" <sips:bob@biloxi.com> ;tag=a48s
@@ -159,12 +231,12 @@ func (p *Parser) ParseCseq() {
 	if len(cs) != 2 {
 		return
 	}
-	p.CSeqNumber = util.StrToInt(cs[0])
-	p.CSeqMethod = cs[1]
+	p.sip.CSeqNumber = util.StrToInt(cs[0])
+	p.sip.CSeqMethod = cs[1]
 }
 
 func (p *Parser) GetHeaderValue(header string) (v string) {
-	if *p.Raw == EmptyStr || header == EmptyStr {
+	if *p.sip.Raw == EmptyStr || header == EmptyStr {
 		return EmptyStr
 	}
 
@@ -172,13 +244,13 @@ func (p *Parser) GetHeaderValue(header string) (v string) {
 		return EmptyStr
 	}
 
-	startIndex := strings.Index(*p.Raw, header+":")
+	startIndex := strings.Index(*p.sip.Raw, header+":")
 
 	if startIndex == -1 {
 		return EmptyStr
 	}
 
-	newStr := (*p.Raw)[startIndex:]
+	newStr := (*p.sip.Raw)[startIndex:]
 
 	endIndex := strings.Index(newStr, CRLF)
 
@@ -202,7 +274,7 @@ func (p *Parser) ParseUID(HeaderUIDName string) {
 	if v == EmptyStr {
 		return
 	}
-	p.UID = v
+	p.sip.UID = v
 }
 
 func (p *Parser) ParseFSCallID(FSCallID string) {
@@ -214,7 +286,7 @@ func (p *Parser) ParseFSCallID(FSCallID string) {
 	if v == EmptyStr {
 		return
 	}
-	p.FSCallID = v
+	p.sip.FSCallID = v
 }
 
 func init() {

@@ -1,4 +1,4 @@
-package model
+package services
 
 import (
 	"context"
@@ -48,7 +48,6 @@ func TestCallLifecycle(t *testing.T) {
 		DstPort:      5060,
 		DstAddr:      "dst-addr",
 		CreateAt:     inviteTime,
-		ViaNum:       1,
 		Raw:          rawPtr,
 	}
 
@@ -209,21 +208,21 @@ func TestCompleteSIPCall(t *testing.T) {
 	// 1. INVITE请求
 	inviteTime := time.Now()
 	invite := entity.SIP{
-		NodeIP:                 nodeIP,
-		Title:                  "INVITE",
-		CSeqMethod:             "INVITE",
-		CallID:                 callID,
-		ToUsername:             "alice",
-		FromUsername:           "bob",
-		UserAgent:              "test-ua",
-		SrcHost:                "src-host",
-		SrcPort:                5060,
-		SrcAddr:                "src-addr",
-		DstHost:                "dst-host",
-		DstPort:                5060,
-		DstAddr:                "dst-addr",
-		CreateAt:               inviteTime,
-		ViaNum:                 1,
+		NodeIP:       nodeIP,
+		Title:        "INVITE",
+		CSeqMethod:   "INVITE",
+		CallID:       callID,
+		ToUsername:   "alice",
+		FromUsername: "bob",
+		UserAgent:    "test-ua",
+		SrcHost:      "src-host",
+		SrcPort:      5060,
+		SrcAddr:      "src-addr",
+		DstHost:      "dst-host",
+		DstPort:      5060,
+		DstAddr:      "dst-addr",
+		CreateAt:     inviteTime,
+
 		Raw:                    rawPtr,
 		TimestampMicroWithDate: 123456789,
 	}

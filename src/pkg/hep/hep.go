@@ -118,8 +118,25 @@ func NewHepMsg(packet []byte) (*HepMsg, error) {
 	return newHepMsg, nil
 }
 
-func (hepMsg *HepMsg) parse(udpPacket []byte) error {
+func NewMockHepMsgBySIPMsg(sipBody []byte) *HepMsg {
+	return &HepMsg{
+		IPProtocolFamily:      0x01,
+		IPProtocolID:          0x01,
+		IP4SourceAddress:      "127.0.0.1",
+		IP4DestinationAddress: "127.0.0.1",
+		SourcePort:            5060,
+		DestinationPort:       5060,
+		Timestamp:             0,
+		TimestampMicro:        0,
+		ProtocolType:          0x01,
+		CaptureAgentID:        0x01,
+		KeepAliveTimer:        0x01,
+		AuthenticateKey:       "1234567890",
+		Body:                  sipBody,
+	}
+}
 
+func (hepMsg *HepMsg) parse(udpPacket []byte) error {
 	switch udpPacket[0] {
 	case 0x01:
 		return hepMsg.parseHep1(udpPacket)

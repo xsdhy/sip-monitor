@@ -1,11 +1,11 @@
-package env
+package config
 
 import (
 	"github.com/caarlos0/env/v10"
 	"github.com/sirupsen/logrus"
 )
 
-type config struct {
+type Config struct {
 	UDPListenPort  int `env:"UDPListenPort" envDefault:"9060"`
 	HTTPListenPort int `env:"HTTPListenPort" envDefault:"9059"`
 
@@ -18,19 +18,21 @@ type config struct {
 	DiscardMethods  string `env:"DiscardMethods" envDefault:"OPTIONS"`
 	MinPacketLength int    `env:"MinPacketLength" envDefault:"24"`
 
+	DBType     string `env:"DBType" envDefault:"sqlite"`
 	DSNURL     string `env:"DSN_URL" envDefault:""`
 	DBUser     string `env:"DBUser" envDefault:""`
 	DBPassword string `env:"DBPassword" envDefault:""`
 	DBAddr     string `env:"DBAddr" envDefault:""`
-	DBName     string `env:"DBName" envDefault:"call_sbc"`
+	DBName     string `env:"DBName" envDefault:"monitor"`
+	DBPath     string `env:"DBPath" envDefault:""`
 }
 
-var Conf = config{}
-
-func init() {
+func ParseConfig() (Config, error) {
+	var Conf Config
 	err := env.Parse(&Conf)
 	if err != nil {
 		logrus.WithError(err).Error("env.Parse error")
 	}
 	logrus.Debugf("%#v\n", Conf)
+	return Conf, nil
 }

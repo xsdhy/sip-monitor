@@ -5,31 +5,23 @@ import (
 )
 
 type SearchParams struct {
-	PageSize int64 `json:"page_size" form:"page_size"`
-	Page     int64 `json:"page" form:"page"`
+	PageSize int64  `json:"page_size" form:"page_size" query:"page_size"`
+	Page     int64  `json:"page" form:"page" query:"page"`
+	SortBy   string `json:"sort_by" form:"sort_by" query:"sort_by"`
+	SortDesc bool   `json:"sort_desc" form:"sort_desc" query:"sort_desc"`
 
-	NodeIP       string `json:"node_ip" form:"node_ip"`
-	SipCallID    string `json:"sip_call_id" form:"sip_call_id"`
-	UserAgent    string `json:"ua" form:"ua"`
-	UserAgentOpr string `json:"ua_opr" form:"ua_opr"`
+	NodeIP    string `json:"node_ip" form:"node_ip" query:"node_ip"`
+	SipCallID string `json:"sip_call_id" form:"sip_call_id" query:"sip_call_id"`
+	UserAgent string `json:"ua" form:"ua" query:"ua"`
 
-	SIPMethod       string `bson:"sip_method" json:"sip_method"`
-	SIPMethodOpr    string `bson:"sip_method_opr" json:"sip_method_opr"`
-	ResponseCode    int    `bson:"response_code" json:"response_code"`
-	ResponseCodeOpr int    `bson:"response_code_opr" json:"response_code_opr"`
+	BeginTime *time.Time `json:"begin_time" form:"begin_time" time_format:"2006-01-02 15:04:05" time_utc:"8" query:"begin_time"`
+	EndTime   *time.Time `json:"end_time" form:"end_time" time_format:"2006-01-02 15:04:05" time_utc:"8" query:"end_time"`
 
-	BeginTime *time.Time `json:"begin_time" form:"begin_time" time_format:"2006-01-02 15:04:05" time_utc:"8"`
-	EndTime   *time.Time `json:"end_time" form:"end_time" time_format:"2006-01-02 15:04:05" time_utc:"8"`
+	FromUser string `form:"from_user" json:"from_user" query:"from_user"`
+	SrcHost  string `form:"src_host" json:"src_host" query:"src_host"`
 
-	FromUser    string `form:"from_user" json:"from_user"`
-	FromUserOpr string `form:"from_user_opr" json:"from_user_opr"`
-	SrcHost     string `form:"src_host" json:"src_host"`
-	SrcHostOpr  string `form:"src_host_opr" json:"src_host_opr"`
-
-	ToUser     string `form:"to_user" json:"to_user"`
-	ToUserOpr  string `form:"to_user_opr" json:"to_user_opr"`
-	DstHost    string `form:"dst_host" json:"dst_host"`
-	DstHostOpr string `form:"dst_host_opr" json:"dst_host_opr"`
+	ToUser  string `form:"to_user" json:"to_user" query:"to_user"`
+	DstHost string `form:"dst_host" json:"dst_host" query:"dst_host"`
 }
 
 type CleanSipRecordDTO struct {

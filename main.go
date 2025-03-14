@@ -2,15 +2,13 @@ package main
 
 import (
 	"embed"
-	"flag"
 	"fmt"
 	"io/fs"
 	"net/http"
 	"path/filepath"
 
-	"sip-monitor/src/entity"
+	"sip-monitor/src/config"
 	"sip-monitor/src/model"
-	"sip-monitor/src/pkg/env"
 
 	"strings"
 
@@ -24,42 +22,52 @@ import (
 var dist embed.FS
 
 func main() {
-	if env.Conf.DSNURL == "" {
-		flag.StringVar(&env.Conf.DSNURL, "dsn", "", "dsn")
-		flag.Parse()
+	// 初始化配置
+	cfg, err := config.ParseConfig()
+	if err != nil {
+		logrus.WithError(err).Error("Failed to parse config")
+		return
 	}
 
-	model.SaveToDBQueue = make(chan entity.SIP, 20000)
-	go model.SaveToDBRunner()
+	logger := logrus.New()
 
-	//初始化数据库
-	model.MongoDBInit()
-	//初始化IP库
-	services.IPDBInit()
+	// 初始化数据库
+	repository, err := model.InitRepository(&cfg)
+	if err != nil {
+		logrus.WithError(err).Error("Failed to create repository")
+		return
+	}
+
+	// 初始化保存服务
+	saveService := services.NewSaveService(logger, repository)
+
 	//启动HepServer
-	go services.HepServerListener()
-	//启动定时任务
-	// go services.Cron()
+	hepServer, err := services.NewHepServer(logger, &cfg, saveService)
+	if err != nil {
+		logrus.WithError(err).Error("Failed to create hep server")
+		return
+	}
+	go hepServer.Start()
 
+	// 启动HTTP Handle
+	handleHttp := services.NewHandleHttp(logger, &cfg, repository)
+
+	// 初始化gin
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 
-	authorized := r.Group("/api", gin.BasicAuth(gin.Accounts{"call": "call.2024"}))
-
 	//后端接口
-	authorized.GET("/record/all", services.SearchAll)
-	authorized.GET("/record/call", services.RecordCallList)
-	authorized.GET("/record/register", services.RecordRegisterList)
-	authorized.GET("/record/details", services.SearchCallID)
-	authorized.GET("/system/db/clean_sip_record", services.CleanSipRecord)
-	authorized.GET("/system/db/stats", services.DbStats)
+	authorized := r.Group("/api")
+	authorized.GET("/record/call", handleHttp.RecordCallList)
+	authorized.GET("/record/register", handleHttp.RecordRegisterList)
+	authorized.GET("/record/details", handleHttp.SearchCallID)
 
 	//前端资源
 	r.Use(ServerStatic("web/build", dist))
 
-	serverHost := fmt.Sprintf("0.0.0.0:%d", env.Conf.HTTPListenPort)
+	serverHost := fmt.Sprintf("0.0.0.0:%d", cfg.HTTPListenPort)
 	logrus.WithField("host", serverHost).Info("HttpServerInit")
-	err := r.Run(serverHost)
+	err = r.Run(serverHost)
 	if err != nil {
 		logrus.WithError(err).Error("HttpServerInit Error")
 	}
