@@ -105,7 +105,6 @@ type HepMsg struct {
 	AuthenticateKey       string
 	Body                  []byte
 	SipMsg                *siprocket.SipMsg
-	//SipMsg	*sip.SipMsg
 }
 
 // NewHepMsg returns a parsed message object. Takes a byte slice.
@@ -162,7 +161,6 @@ func (hepMsg *HepMsg) parseHep1(udpPacket []byte) error {
 	hepMsg.Body = udpPacket[16:]
 	if len(udpPacket[16:packetLength-4]) > 1 {
 		hepMsg.SipMsg = siprocket.Parse(udpPacket[16:packetLength])
-
 	} else {
 
 	}

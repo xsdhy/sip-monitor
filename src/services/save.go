@@ -40,11 +40,8 @@ func (s *SaveService) InitSaveToDBRunner() {
 		ticker := time.NewTicker(30 * time.Second)
 		defer ticker.Stop()
 
-		for {
-			select {
-			case <-ticker.C:
-				s.FlushCacheToDB()
-			}
+		for range ticker.C {
+			s.FlushCacheToDB()
 		}
 	}()
 }
@@ -96,11 +93,8 @@ func (s *SaveService) FlushCacheToDB() {
 }
 
 func (s *SaveService) SaveToDBRunner() {
-	for {
-		select {
-		case item := <-s.SaveToDBQueue:
-			s.SaveOptimized(item)
-		}
+	for item := range s.SaveToDBQueue {
+		s.SaveOptimized(item)
 	}
 }
 
@@ -113,7 +107,7 @@ func (s *SaveService) SaveOptimized(item entity.SIP) {
 			NodeIP:         item.NodeIP,
 			SIPCallID:      item.CallID,
 			CreateTime:     item.CreateAt,
-			TimestampMicro: item.TimestampMicroWithDate,
+			TimestampMicro: item.TimestampMicro,
 			RawMsg:         *item.Raw,
 		}
 		err := s.repository.CreateRecord(context.TODO(), &record)
@@ -158,10 +152,9 @@ func (s *SaveService) updateCallRecordInCache(item entity.SIP) {
 			record.DstHost = item.DstHost
 			record.DstPort = item.DstPort
 			record.DstAddr = item.DstAddr
-			record.TimestampMicro = item.TimestampMicroWithDate
+			record.TimestampMicro = item.TimestampMicro
 
-			createTime := item.CreateAt
-			record.CreateTime = &createTime
+			record.CreateTime = &item.CreateAt
 
 			s.callRecordCache[callID] = record
 		}
@@ -180,7 +173,6 @@ func (s *SaveService) updateCallRecordInCache(item entity.SIP) {
 				ringingTime := item.CreateAt
 				record.RingingTime = &ringingTime
 			}
-			break
 		case "200": // OK
 			if (item.CSeqMethod == "ACK" || item.CSeqMethod == "INVITE") && record.AnswerTime == nil {
 				answerTime := item.CreateAt
@@ -191,7 +183,6 @@ func (s *SaveService) updateCallRecordInCache(item entity.SIP) {
 				record.HangupCode = 200
 				record.HangupCause = "Normal Clearing"
 			}
-			break
 		case "CANCEL", "480", "487", "500": // Error or Cancel
 			if record.EndTime == nil {
 				endTime := item.CreateAt
@@ -204,7 +195,6 @@ func (s *SaveService) updateCallRecordInCache(item entity.SIP) {
 					record.HangupCause = item.ResponseDesc
 				}
 			}
-			break
 		}
 	}
 

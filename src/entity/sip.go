@@ -41,11 +41,10 @@ type SIP struct {
 	DstPort int    `json:"dst_port"`
 	DstAddr string `json:"dst_addr"`
 
-	CreateAt               time.Time `json:"create_time"`
-	TimestampMicro         uint32    `json:"timestamp_micro2"`
-	TimestampMicroWithDate int64     `json:"timestamp_micro"`
-	Protocol               int       `json:"protocol"`
-	UID                    string    `json:"uid"`        // correlative id for AB call leg
-	FSCallID               string    `json:"fs_call_id"` // freeswitch CallID
-	Raw                    *string   `json:"raw_msg"`    // raw sip message
+	CreateAt       time.Time `json:"create_time"`
+	TimestampMicro int64     `json:"timestamp_micro"`
+	Protocol       int       `json:"protocol"`
+	UID            string    `json:"uid"`        // correlative id for AB call leg
+	FSCallID       string    `json:"fs_call_id"` // freeswitch CallID
+	Raw            *string   `json:"raw_msg"`    // raw sip message
 }

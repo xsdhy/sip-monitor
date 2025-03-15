@@ -272,7 +272,6 @@ func test(t *testing.T) {
 }
 
 func TestParseFromToUA(t *testing.T) {
-
 	successCases := []struct {
 		in         string
 		header     string

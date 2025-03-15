@@ -6,7 +6,7 @@ WORKDIR /app
 COPY ./web .
 RUN npm install --registry=${npm_registry} && npm run build
 
-FROM golang:1.21 as golang
+FROM golang:1.24 as golang
 
 WORKDIR /app
 COPY . .

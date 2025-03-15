@@ -71,8 +71,7 @@ func (p *Parser) ParseSIPMsg() (s *entity.SIP, err error) {
 	p.ParseTo()
 	p.ParseUserAgent()
 	p.sip.CreateAt = time.Unix(int64(p.hepMsg.Timestamp), 0)
-	p.sip.TimestampMicro = p.hepMsg.TimestampMicro
-	p.sip.TimestampMicroWithDate = p.sip.CreateAt.Add(time.Microsecond * time.Duration(p.sip.TimestampMicro)).UnixMicro()
+	p.sip.TimestampMicro = p.sip.CreateAt.Add(time.Microsecond * time.Duration(p.hepMsg.TimestampMicro)).UnixMicro()
 
 	if p.cfg.HeaderFSCallIDName != "" {
 		p.ParseFSCallID(p.cfg.HeaderFSCallIDName)

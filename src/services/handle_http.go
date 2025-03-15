@@ -56,7 +56,7 @@ func (h *HandleHttp) SearchCallID(c *gin.Context) {
 			continue
 		}
 		sip.CreateAt = record.CreateTime
-		sip.TimestampMicroWithDate = record.TimestampMicro
+		sip.TimestampMicro = record.TimestampMicro
 
 		sip.SrcAddr = fmt.Sprintf("%s_%d", sip.FromDomain, sip.SrcPort)
 		sip.DstAddr = strings.ReplaceAll(sip.ToDomain, ":", "_")
