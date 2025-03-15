@@ -40,15 +40,15 @@ func GetIPArea(ip string) (string, string, string) {
 }
 
 func GetIPAreaByCZ(ip string) (string, string, string) {
-	address, isp, err := qqwry.QueryIP(ip)
+	location, err := qqwry.QueryIP(ip)
 	if err != nil {
 		return "", "", ""
 	}
 
-	fmt.Println(address, isp)
-	parse := addr.Smart(address)
+	fmt.Println(location.Country, location.Province, location.City, location.ISP)
+	parse := addr.Smart(location.Country + location.Province + location.City)
 	if parse.PostCode == "" {
-		return address, "", isp
+		return location.Country + location.Province + location.City, "", location.ISP
 	}
-	return "中国", parse.City, isp
+	return "中国", parse.City, location.ISP
 }

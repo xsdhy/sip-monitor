@@ -142,7 +142,7 @@ func (r *GormRepository) DeleteRecord(ctx context.Context, id string) error {
 
 func (r *GormRepository) GetRecordsBySIPCallID(ctx context.Context, sipCallID string) ([]entity.Record, error) {
 	var records []entity.Record
-	err := r.db.WithContext(ctx).Where("sip_call_id = ?", sipCallID).Find(&records).Error
+	err := r.db.WithContext(ctx).Where("sip_call_id = ?", sipCallID).Order("timestamp_micro").Find(&records).Error
 	if err != nil {
 		return nil, err
 	}
