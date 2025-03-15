@@ -104,7 +104,7 @@ func parseSipFrom(v []byte, out *sipFrom) {
 			out.Name = append(out.Name, v[pos])
 
 		case FIELD_NAME:
-			if v[pos] == '<' || v[pos] == ' ' {
+			if v[pos] == '<' {
 				state = FIELD_BASE
 				pos++
 				continue
