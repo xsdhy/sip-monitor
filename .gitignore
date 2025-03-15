@@ -14,3 +14,5 @@ sip-monitor
 __debug_bin*
 Makefile
 sip_monitor.db
+coverage.html
+coverage.out

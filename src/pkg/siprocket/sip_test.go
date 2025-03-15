@@ -388,11 +388,6 @@ func TestParseFrom(t *testing.T) {
 	})
 }
 
-// 帮助函数检查两个字节切片是否相等
-func byteSliceEqual(a, b []byte) bool {
-	return string(a) == string(b)
-}
-
 // 修复测试中发现的问题
 func TestParseFixIssues(t *testing.T) {
 	// 这里添加测试，专门针对通过测试发现的问题
@@ -1236,4 +1231,707 @@ func TestToJsonDetailed(t *testing.T) {
 	if invalidJson == "" {
 		t.Log("处理了无效的 UTF-8 序列，返回了空字符串")
 	}
+}
+
+// 测试解析完整的SIP INVITE消息
+func TestParse_ComplexInviteMessage(t *testing.T) {
+	// 原始SIP消息中的敏感信息已被替换：
+	// - 真实IP地址替换为测试范围IP (192.0.2.x)
+	// - 真实电话号码替换为测试号码 (12345678901)
+	sipMsg := "INVITE sip:12345678901@192.0.2.1:5060 SIP/2.0\r\n" +
+		"Via: SIP/2.0/UDP 192.0.2.2:5080;rport;branch=z9hG4bKjS75m3yFt7gjQ\r\n" +
+		"Max-Forwards: 67\r\n" +
+		"From: \"GSCX\" <sip:GSCX@192.0.2.2>;tag=SF4SUD9UKQr1c\r\n" +
+		"To: <sip:12345678901@192.0.2.1:5060>\r\n" +
+		"Call-ID: 6cbe3a91-7c3e-123e-91b3-5254003ac0b9\r\n" +
+		"CSeq: 96467617 INVITE\r\n" +
+		"Contact: <sip:mod_sofia@192.0.2.2:5080>\r\n" +
+		"User-Agent: FreeSWITCH-mod_sofia/1.10.7-release~64bit\r\n" +
+		"Allow: INVITE, ACK, BYE, CANCEL, OPTIONS, MESSAGE, INFO, UPDATE, REGISTER, REFER, NOTIFY\r\n" +
+		"Supported: timer, path, replaces\r\n" +
+		"Allow-Events: talk, hold, conference, refer\r\n" +
+		"Content-Type: application/sdp\r\n" +
+		"Content-Disposition: session\r\n" +
+		"Content-Length: 248\r\n" +
+		"X-JCallId: d6027839-1e09-4287-9153-a781013d0947\r\n" +
+		"X-FS-Support: update_display,send_info\r\n" +
+		"Remote-Party-ID: \"GSCX\" <sip:GSCX@192.0.2.2>;party=calling;screen=yes;privacy=off\r\n" +
+		"\r\n" +
+		"v=0\r\n" +
+		"o=FreeSWITCH 1742016966 1742016967 IN IP4 192.0.2.3\r\n" +
+		"s=FreeSWITCH\r\n" +
+		"c=IN IP4 192.0.2.3\r\n" +
+		"t=0 0\r\n" +
+		"m=audio 25852 RTP/AVP 0 8 101\r\n" +
+		"a=rtpmap:0 PCMU/8000\r\n" +
+		"a=rtpmap:8 PCMA/8000\r\n" +
+		"a=rtpmap:101 telephone-event/8000\r\n" +
+		"a=fmtp:101 0-15\r\n" +
+		"a=ptime:20\r\n"
+
+	result := Parse([]byte(sipMsg))
+
+	if result == nil {
+		t.Fatalf("Parse返回了nil")
+	}
+
+	// 测试请求行
+	t.Run("请求行解析", func(t *testing.T) {
+		if string(result.Req.Method) != "INVITE" {
+			t.Errorf("请求方法错误，期望'INVITE'，得到'%s'", result.Req.Method)
+		}
+		if result.Req.UriType != "sip" {
+			t.Errorf("URI类型错误，期望'sip'，得到'%s'", result.Req.UriType)
+		}
+		if string(result.Req.User) != "12345678901" {
+			t.Errorf("目标用户错误，期望'12345678901'，得到'%s'", result.Req.User)
+		}
+		if string(result.Req.Host) != "192.0.2.1" {
+			t.Errorf("目标主机错误，期望'192.0.2.1'，得到'%s'", result.Req.Host)
+		}
+		if string(result.Req.Port) != "5060" {
+			t.Errorf("目标端口错误，期望'5060'，得到'%s'", result.Req.Port)
+		}
+	})
+
+	// 测试Via头部
+	t.Run("Via头部解析", func(t *testing.T) {
+		if len(result.Via) == 0 {
+			t.Fatalf("未解析Via头部")
+		}
+
+		if result.Via[0].Trans != "udp" {
+			t.Errorf("Via传输协议错误，期望'udp'，得到'%s'", result.Via[0].Trans)
+		}
+		if string(result.Via[0].Host) != "192.0.2.2" {
+			t.Errorf("Via主机错误，期望'192.0.2.2'，得到'%s'", result.Via[0].Host)
+		}
+		if string(result.Via[0].Port) != "5080" {
+			t.Errorf("Via端口错误，期望'5080'，得到'%s'", result.Via[0].Port)
+		}
+		if string(result.Via[0].Branch) != "z9hG4bKjS75m3yFt7gjQ" {
+			t.Errorf("Via分支参数错误，期望'z9hG4bKjS75m3yFt7gjQ'，得到'%s'", result.Via[0].Branch)
+		}
+	})
+
+	// 测试From头部
+	t.Run("From头部解析", func(t *testing.T) {
+		if string(result.From.Name) != "GSCX" {
+			t.Errorf("From名称错误，期望'GSCX'，得到'%s'", result.From.Name)
+		}
+		if string(result.From.User) != "GSCX" {
+			t.Errorf("From用户错误，期望'GSCX'，得到'%s'", result.From.User)
+		}
+		if string(result.From.Host) != "192.0.2.2" {
+			t.Errorf("From主机错误，期望'192.0.2.2'，得到'%s'", result.From.Host)
+		}
+		if string(result.From.Tag) != "SF4SUD9UKQr1c" {
+			t.Errorf("From标签错误，期望'SF4SUD9UKQr1c'，得到'%s'", result.From.Tag)
+		}
+	})
+
+	// 测试To头部
+	t.Run("To头部解析", func(t *testing.T) {
+		if string(result.To.User) != "12345678901" {
+			t.Errorf("To用户错误，期望'12345678901'，得到'%s'", result.To.User)
+		}
+		if string(result.To.Host) != "192.0.2.1" {
+			t.Errorf("To主机错误，期望'192.0.2.1'，得到'%s'", result.To.Host)
+		}
+		if string(result.To.Port) != "5060" {
+			t.Errorf("To端口错误，期望'5060'，得到'%s'", result.To.Port)
+		}
+	})
+
+	// 测试Call-ID头部
+	t.Run("Call-ID头部解析", func(t *testing.T) {
+		if string(result.CallId.Value) != "6cbe3a91-7c3e-123e-91b3-5254003ac0b9" {
+			t.Errorf("Call-ID错误，期望'6cbe3a91-7c3e-123e-91b3-5254003ac0b9'，得到'%s'", result.CallId.Value)
+		}
+	})
+
+	// 测试CSeq头部
+	t.Run("CSeq头部解析", func(t *testing.T) {
+		if string(result.Cseq.Id) != "96467617" {
+			t.Errorf("CSeq ID错误，期望'96467617'，得到'%s'", result.Cseq.Id)
+		}
+		if string(result.Cseq.Method) != "INVITE" {
+			t.Errorf("CSeq方法错误，期望'INVITE'，得到'%s'", result.Cseq.Method)
+		}
+	})
+
+	// 测试Contact头部
+	t.Run("Contact头部解析", func(t *testing.T) {
+		if string(result.Contact.User) != "mod_sofia" {
+			t.Errorf("Contact用户错误，期望'mod_sofia'，得到'%s'", result.Contact.User)
+		}
+		if string(result.Contact.Host) != "192.0.2.2" {
+			t.Errorf("Contact主机错误，期望'192.0.2.2'，得到'%s'", result.Contact.Host)
+		}
+		if string(result.Contact.Port) != "5080" {
+			t.Errorf("Contact端口错误，期望'5080'，得到'%s'", result.Contact.Port)
+		}
+	})
+
+	// 测试User-Agent头部
+	t.Run("User-Agent头部解析", func(t *testing.T) {
+		if string(result.Ua.Value) != "FreeSWITCH-mod_sofia/1.10.7-release~64bit" {
+			t.Errorf("User-Agent错误，期望'FreeSWITCH-mod_sofia/1.10.7-release~64bit'，得到'%s'", result.Ua.Value)
+		}
+	})
+
+	// 测试Content-Type头部
+	t.Run("Content-Type头部解析", func(t *testing.T) {
+		if string(result.ContType.Value) != "application/sdp" {
+			t.Errorf("Content-Type错误，期望'application/sdp'，得到'%s'", result.ContType.Value)
+		}
+	})
+
+	// 测试SDP内容解析
+	t.Run("SDP内容解析", func(t *testing.T) {
+		// 测试连接数据
+		if !strings.Contains(string(result.Sdp.ConnData.AddrType), "IP4") {
+			t.Errorf("SDP地址类型错误，期望包含'IP4'，得到'%s'", result.Sdp.ConnData.AddrType)
+		}
+		if string(result.Sdp.ConnData.ConnAddr) != "192.0.2.3" {
+			t.Errorf("SDP连接地址错误，期望'192.0.2.3'，得到'%s'", result.Sdp.ConnData.ConnAddr)
+		}
+
+		// 测试媒体描述
+		if string(result.Sdp.MediaDesc.MediaType) != "audio" {
+			t.Errorf("SDP媒体类型错误，期望'audio'，得到'%s'", result.Sdp.MediaDesc.MediaType)
+		}
+		if string(result.Sdp.MediaDesc.Port) != "25852" {
+			t.Errorf("SDP端口错误，期望'25852'，得到'%s'", result.Sdp.MediaDesc.Port)
+		}
+		if string(result.Sdp.MediaDesc.Proto) != "RTP/AVP" {
+			t.Errorf("SDP协议错误，期望'RTP/AVP'，得到'%s'", result.Sdp.MediaDesc.Proto)
+		}
+		if string(result.Sdp.MediaDesc.Fmt) != "0 8 101" {
+			t.Errorf("SDP格式错误，期望'0 8 101'，得到'%s'", result.Sdp.MediaDesc.Fmt)
+		}
+
+		// 测试SDP属性
+		if len(result.Sdp.Attrib) < 5 {
+			t.Errorf("SDP属性解析不完整，期望至少5个属性，得到%d个", len(result.Sdp.Attrib))
+		} else {
+			// 检查第一个rtpmap属性
+			found := false
+			for _, attr := range result.Sdp.Attrib {
+				if string(attr.Cat) == "rtpmap" && string(attr.Val) == "0 PCMU/8000" {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("未找到SDP属性 'rtpmap:0 PCMU/8000'")
+			}
+
+			// 检查ptime属性
+			found = false
+			for _, attr := range result.Sdp.Attrib {
+				if string(attr.Cat) == "ptime" && string(attr.Val) == "20" {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("未找到SDP属性 'ptime:20'")
+			}
+		}
+	})
+}
+
+// 测试解析SIP 480 Temporarily Unavailable响应消息
+func TestParse_TemporarilyUnavailableResponse(t *testing.T) {
+	// 原始SIP消息中的敏感信息已被替换：
+	// - 真实IP地址替换为测试范围IP (192.0.2.x)
+	// - 真实电话号码替换为测试号码 (12345678901)
+	sipMsg := "SIP/2.0 480 Temporarily Unavailable\r\n" +
+		"Via: SIP/2.0/UDP 192.0.2.2:5080;received=192.0.2.3;rport=5080;branch=z9hG4bKm9746NaNDZBBS\r\n" +
+		"From: \"GSCX\" <sip:GSCX@192.0.2.2>;tag=5S1gZeX497HNj\r\n" +
+		"To: <sip:12345678901@192.0.2.1:5060>;tag=436afa560f5e81a4\r\n" +
+		"Call-ID: c47d8365-7c2a-123e-91b3-5254003ac0b9\r\n" +
+		"CSeq: 96463395 INVITE\r\n" +
+		"Server: VOS3000 V2.1.4.0\r\n" +
+		"Content-Length: 0\r\n" +
+		"\r\n"
+
+	result := Parse([]byte(sipMsg))
+
+	if result == nil {
+		t.Fatalf("Parse返回了nil")
+	}
+
+	// 测试响应状态行
+	t.Run("响应状态行解析", func(t *testing.T) {
+		if string(result.Req.StatusCode) != "480" {
+			t.Errorf("状态码错误，期望'480'，得到'%s'", result.Req.StatusCode)
+		}
+		if string(result.Req.StatusDesc) != "Temporarily Unavailable" {
+			t.Errorf("状态描述错误，期望'Temporarily Unavailable'，得到'%s'", result.Req.StatusDesc)
+		}
+		if string(result.Req.Method) != "SIP/2.0" {
+			t.Errorf("方法字段错误，期望'SIP/2.0'，得到'%s'", result.Req.Method)
+		}
+	})
+
+	// 测试Via头部
+	t.Run("Via头部解析", func(t *testing.T) {
+		if len(result.Via) == 0 {
+			t.Fatalf("未解析Via头部")
+		}
+
+		if result.Via[0].Trans != "udp" {
+			t.Errorf("Via传输协议错误，期望'udp'，得到'%s'", result.Via[0].Trans)
+		}
+		if string(result.Via[0].Host) != "192.0.2.2" {
+			t.Errorf("Via主机错误，期望'192.0.2.2'，得到'%s'", result.Via[0].Host)
+		}
+		if string(result.Via[0].Port) != "5080" {
+			t.Errorf("Via端口错误，期望'5080'，得到'%s'", result.Via[0].Port)
+		}
+		if string(result.Via[0].Branch) != "z9hG4bKm9746NaNDZBBS" {
+			t.Errorf("Via分支参数错误，期望'z9hG4bKm9746NaNDZBBS'，得到'%s'", result.Via[0].Branch)
+		}
+		if string(result.Via[0].Rcvd) != "192.0.2.3" {
+			t.Errorf("Via received参数错误，期望'192.0.2.3'，得到'%s'", result.Via[0].Rcvd)
+		}
+		if string(result.Via[0].Rport) != "5080" {
+			t.Errorf("Via rport参数错误，期望'5080'，得到'%s'", result.Via[0].Rport)
+		}
+	})
+
+	// 测试From头部
+	t.Run("From头部解析", func(t *testing.T) {
+		if string(result.From.Name) != "GSCX" {
+			t.Errorf("From名称错误，期望'GSCX'，得到'%s'", result.From.Name)
+		}
+		if string(result.From.User) != "GSCX" {
+			t.Errorf("From用户错误，期望'GSCX'，得到'%s'", result.From.User)
+		}
+		if string(result.From.Host) != "192.0.2.2" {
+			t.Errorf("From主机错误，期望'192.0.2.2'，得到'%s'", result.From.Host)
+		}
+		if string(result.From.Tag) != "5S1gZeX497HNj" {
+			t.Errorf("From标签错误，期望'5S1gZeX497HNj'，得到'%s'", result.From.Tag)
+		}
+	})
+
+	// 测试To头部
+	t.Run("To头部解析", func(t *testing.T) {
+		if string(result.To.User) != "12345678901" {
+			t.Errorf("To用户错误，期望'12345678901'，得到'%s'", result.To.User)
+		}
+		if string(result.To.Host) != "192.0.2.1" {
+			t.Errorf("To主机错误，期望'192.0.2.1'，得到'%s'", result.To.Host)
+		}
+		if string(result.To.Port) != "5060" {
+			t.Errorf("To端口错误，期望'5060'，得到'%s'", result.To.Port)
+		}
+		if string(result.To.Tag) != "436afa560f5e81a4" {
+			t.Errorf("To标签错误，期望'436afa560f5e81a4'，得到'%s'", result.To.Tag)
+		}
+	})
+
+	// 测试Call-ID头部
+	t.Run("Call-ID头部解析", func(t *testing.T) {
+		if string(result.CallId.Value) != "c47d8365-7c2a-123e-91b3-5254003ac0b9" {
+			t.Errorf("Call-ID错误，期望'c47d8365-7c2a-123e-91b3-5254003ac0b9'，得到'%s'", result.CallId.Value)
+		}
+	})
+
+	// 测试CSeq头部
+	t.Run("CSeq头部解析", func(t *testing.T) {
+		if string(result.Cseq.Id) != "96463395" {
+			t.Errorf("CSeq ID错误，期望'96463395'，得到'%s'", result.Cseq.Id)
+		}
+		if string(result.Cseq.Method) != "INVITE" {
+			t.Errorf("CSeq方法错误，期望'INVITE'，得到'%s'", result.Cseq.Method)
+		}
+	})
+
+	// 验证为响应消息特有的字段
+	t.Run("Server头部解析", func(t *testing.T) {
+		// 注意：当前SipMsg结构中可能没有专门存储Server字段的地方
+		// 这是一个示例测试，如果需要验证Server字段，可能需要修改SipMsg结构
+		// 或采用其他方式（如搜索Raw字段）来验证
+		if !strings.Contains(result.Raw, "Server: VOS3000") {
+			t.Errorf("Raw消息中没有包含预期的Server头部信息")
+		}
+	})
+}
+
+// 测试解析SIP BYE请求消息
+func TestParse_ByeRequest(t *testing.T) {
+	// 原始SIP消息中的敏感信息已被替换：
+	// - 真实IP地址替换为测试范围IP (192.0.2.x)
+	// - 真实电话号码替换为测试号码 (12345678901)
+	sipMsg := "BYE sip:12345678901@192.0.2.1:5060 SIP/2.0\r\n" +
+		"Via: SIP/2.0/UDP 192.0.2.2:5080;rport;branch=z9hG4bKmBtQrS0pmSXQe\r\n" +
+		"Max-Forwards: 70\r\n" +
+		"From: \"GSCX\" <sip:GSCX@192.0.2.2>;tag=SF4SUD9UKQr1c\r\n" +
+		"To: <sip:12345678901@192.0.2.1:5060>;tag=489aa49a2e1e92dd\r\n" +
+		"Call-ID: 6cbe3a91-7c3e-123e-91b3-5254003ac0b9\r\n" +
+		"CSeq: 96467618 BYE\r\n" +
+		"Contact: <sip:mod_sofia@192.0.2.2:5080>\r\n" +
+		"User-Agent: FreeSWITCH-mod_sofia/1.10.7-release~64bit\r\n" +
+		"Allow: INVITE, ACK, BYE, CANCEL, OPTIONS, MESSAGE, INFO, UPDATE, REGISTER, REFER, NOTIFY\r\n" +
+		"Supported: timer, path, replaces\r\n" +
+		"Reason: SIP;cause=408;text=\"Session timeout\"\r\n" +
+		"Content-Length: 0\r\n" +
+		"\r\n"
+
+	result := Parse([]byte(sipMsg))
+
+	if result == nil {
+		t.Fatalf("Parse返回了nil")
+	}
+
+	// 测试请求行
+	t.Run("请求行解析", func(t *testing.T) {
+		if string(result.Req.Method) != "BYE" {
+			t.Errorf("请求方法错误，期望'BYE'，得到'%s'", result.Req.Method)
+		}
+		if result.Req.UriType != "sip" {
+			t.Errorf("URI类型错误，期望'sip'，得到'%s'", result.Req.UriType)
+		}
+		if string(result.Req.User) != "12345678901" {
+			t.Errorf("目标用户错误，期望'12345678901'，得到'%s'", result.Req.User)
+		}
+		if string(result.Req.Host) != "192.0.2.1" {
+			t.Errorf("目标主机错误，期望'192.0.2.1'，得到'%s'", result.Req.Host)
+		}
+		if string(result.Req.Port) != "5060" {
+			t.Errorf("目标端口错误，期望'5060'，得到'%s'", result.Req.Port)
+		}
+	})
+
+	// 测试Via头部
+	t.Run("Via头部解析", func(t *testing.T) {
+		if len(result.Via) == 0 {
+			t.Fatalf("未解析Via头部")
+		}
+
+		if result.Via[0].Trans != "udp" {
+			t.Errorf("Via传输协议错误，期望'udp'，得到'%s'", result.Via[0].Trans)
+		}
+		if string(result.Via[0].Host) != "192.0.2.2" {
+			t.Errorf("Via主机错误，期望'192.0.2.2'，得到'%s'", result.Via[0].Host)
+		}
+		if string(result.Via[0].Port) != "5080" {
+			t.Errorf("Via端口错误，期望'5080'，得到'%s'", result.Via[0].Port)
+		}
+		if string(result.Via[0].Branch) != "z9hG4bKmBtQrS0pmSXQe" {
+			t.Errorf("Via分支参数错误，期望'z9hG4bKmBtQrS0pmSXQe'，得到'%s'", result.Via[0].Branch)
+		}
+	})
+
+	// 测试From头部
+	t.Run("From头部解析", func(t *testing.T) {
+		if string(result.From.Name) != "GSCX" {
+			t.Errorf("From名称错误，期望'GSCX'，得到'%s'", result.From.Name)
+		}
+		if string(result.From.User) != "GSCX" {
+			t.Errorf("From用户错误，期望'GSCX'，得到'%s'", result.From.User)
+		}
+		if string(result.From.Host) != "192.0.2.2" {
+			t.Errorf("From主机错误，期望'192.0.2.2'，得到'%s'", result.From.Host)
+		}
+		if string(result.From.Tag) != "SF4SUD9UKQr1c" {
+			t.Errorf("From标签错误，期望'SF4SUD9UKQr1c'，得到'%s'", result.From.Tag)
+		}
+	})
+
+	// 测试To头部
+	t.Run("To头部解析", func(t *testing.T) {
+		if string(result.To.User) != "12345678901" {
+			t.Errorf("To用户错误，期望'12345678901'，得到'%s'", result.To.User)
+		}
+		if string(result.To.Host) != "192.0.2.1" {
+			t.Errorf("To主机错误，期望'192.0.2.1'，得到'%s'", result.To.Host)
+		}
+		if string(result.To.Port) != "5060" {
+			t.Errorf("To端口错误，期望'5060'，得到'%s'", result.To.Port)
+		}
+		if string(result.To.Tag) != "489aa49a2e1e92dd" {
+			t.Errorf("To标签错误，期望'489aa49a2e1e92dd'，得到'%s'", result.To.Tag)
+		}
+	})
+
+	// 测试Call-ID头部
+	t.Run("Call-ID头部解析", func(t *testing.T) {
+		if string(result.CallId.Value) != "6cbe3a91-7c3e-123e-91b3-5254003ac0b9" {
+			t.Errorf("Call-ID错误，期望'6cbe3a91-7c3e-123e-91b3-5254003ac0b9'，得到'%s'", result.CallId.Value)
+		}
+	})
+
+	// 测试CSeq头部
+	t.Run("CSeq头部解析", func(t *testing.T) {
+		if string(result.Cseq.Id) != "96467618" {
+			t.Errorf("CSeq ID错误，期望'96467618'，得到'%s'", result.Cseq.Id)
+		}
+		if string(result.Cseq.Method) != "BYE" {
+			t.Errorf("CSeq方法错误，期望'BYE'，得到'%s'", result.Cseq.Method)
+		}
+	})
+
+	// 测试Contact头部
+	t.Run("Contact头部解析", func(t *testing.T) {
+		if string(result.Contact.User) != "mod_sofia" {
+			t.Errorf("Contact用户错误，期望'mod_sofia'，得到'%s'", result.Contact.User)
+		}
+		if string(result.Contact.Host) != "192.0.2.2" {
+			t.Errorf("Contact主机错误，期望'192.0.2.2'，得到'%s'", result.Contact.Host)
+		}
+		if string(result.Contact.Port) != "5080" {
+			t.Errorf("Contact端口错误，期望'5080'，得到'%s'", result.Contact.Port)
+		}
+	})
+
+	// 测试User-Agent头部
+	t.Run("User-Agent头部解析", func(t *testing.T) {
+		if string(result.Ua.Value) != "FreeSWITCH-mod_sofia/1.10.7-release~64bit" {
+			t.Errorf("User-Agent错误，期望'FreeSWITCH-mod_sofia/1.10.7-release~64bit'，得到'%s'", result.Ua.Value)
+		}
+	})
+
+	// 测试Reason头部
+	t.Run("Reason头部解析", func(t *testing.T) {
+		// 注意：当前SipMsg结构中可能没有专门存储Reason字段的地方
+		// 通过检查原始消息来验证
+		if !strings.Contains(result.Raw, "Reason: SIP;cause=408;text=\"Session timeout\"") {
+			t.Errorf("Raw消息中没有包含预期的Reason头部信息")
+		}
+	})
+}
+
+// 测试解析SIP 200 OK响应消息
+func TestParse_OkResponse(t *testing.T) {
+	// 原始SIP消息中的敏感信息已被替换：
+	// - 真实IP地址替换为测试范围IP:
+	//   * 10.10.0.12 -> 192.0.2.2
+	//   * 162.14.124.128 -> 192.0.2.3
+	//   * 139.155.143.191 -> 192.0.2.1
+	//   * 58.56.200.162 -> 192.0.2.4
+	// - 真实电话号码替换为测试号码:
+	//   * 19938208873 -> 12345678901
+
+	sipMsg := "SIP/2.0 200 OK\r\n" +
+		"Via: SIP/2.0/UDP 192.0.2.2:5080;received=192.0.2.3;rport=5080;branch=z9hG4bKjS75m3yFt7gjQ\r\n" +
+		"From: \"GSCX\" <sip:GSCX@192.0.2.2>;tag=SF4SUD9UKQr1c\r\n" +
+		"To: <sip:12345678901@192.0.2.1:5060>;tag=489aa49a2e1e92dd\r\n" +
+		"Call-ID: 6cbe3a91-7c3e-123e-91b3-5254003ac0b9\r\n" +
+		"CSeq: 96467617 INVITE\r\n" +
+		"Contact: <sip:12345678901@192.0.2.1:5060>\r\n" +
+		"Allow: INVITE, ACK, CANCEL, BYE, OPTIONS, INFO, UPDATE, PRACK\r\n" +
+		"Server: VOS3000 V2.1.4.0\r\n" +
+		"Supported: timer, linknat\r\n" +
+		"Require: timer\r\n" +
+		"Session-Expires: 600;refresher=uas\r\n" +
+		"Content-Type: application/sdp\r\n" +
+		"Content-Length: 200\r\n" +
+		"\r\n" +
+		"v=0\r\n" +
+		"o=- 30402 30403 IN IP4 192.0.2.4\r\n" +
+		"s=VOS3000\r\n" +
+		"c=IN IP4 192.0.2.4\r\n" +
+		"t=0 0\r\n" +
+		"m=audio 22818 RTP/AVP 8 101\r\n" +
+		"a=rtpmap:8 PCMA/8000\r\n" +
+		"a=rtpmap:101 telephone-event/8000\r\n" +
+		"a=fmtp:101 0-15\r\n" +
+		"a=sendrecv\r\n"
+
+	result := Parse([]byte(sipMsg))
+
+	if result == nil {
+		t.Fatalf("Parse返回了nil")
+	}
+
+	// 测试响应行
+	t.Run("响应行解析", func(t *testing.T) {
+		if string(result.Req.StatusCode) != "200" {
+			t.Errorf("状态码错误，期望'200'，得到'%s'", result.Req.StatusCode)
+		}
+		// 注意：当前的解析器将"SIP/2.0"放入Method字段，这是当前实现的特性
+		if string(result.Req.Method) != "SIP/2.0" {
+			t.Errorf("响应协议错误，期望'SIP/2.0'，得到'%s'", result.Req.Method)
+		}
+	})
+
+	// 测试Via头部
+	t.Run("Via头部解析", func(t *testing.T) {
+		if len(result.Via) == 0 {
+			t.Fatalf("未解析Via头部")
+		}
+
+		if result.Via[0].Trans != "udp" {
+			t.Errorf("Via传输协议错误，期望'udp'，得到'%s'", result.Via[0].Trans)
+		}
+		if string(result.Via[0].Host) != "192.0.2.2" {
+			t.Errorf("Via主机错误，期望'192.0.2.2'，得到'%s'", result.Via[0].Host)
+		}
+		if string(result.Via[0].Port) != "5080" {
+			t.Errorf("Via端口错误，期望'5080'，得到'%s'", result.Via[0].Port)
+		}
+		if string(result.Via[0].Rcvd) != "192.0.2.3" {
+			t.Errorf("Via received参数错误，期望'192.0.2.3'，得到'%s'", result.Via[0].Rcvd)
+		}
+		if string(result.Via[0].Branch) != "z9hG4bKjS75m3yFt7gjQ" {
+			t.Errorf("Via分支参数错误，期望'z9hG4bKjS75m3yFt7gjQ'，得到'%s'", result.Via[0].Branch)
+		}
+	})
+
+	// 测试From头部
+	t.Run("From头部解析", func(t *testing.T) {
+		if string(result.From.Name) != "GSCX" {
+			t.Errorf("From名称错误，期望'GSCX'，得到'%s'", result.From.Name)
+		}
+		if string(result.From.User) != "GSCX" {
+			t.Errorf("From用户错误，期望'GSCX'，得到'%s'", result.From.User)
+		}
+		if string(result.From.Host) != "192.0.2.2" {
+			t.Errorf("From主机错误，期望'192.0.2.2'，得到'%s'", result.From.Host)
+		}
+		if string(result.From.Tag) != "SF4SUD9UKQr1c" {
+			t.Errorf("From标签错误，期望'SF4SUD9UKQr1c'，得到'%s'", result.From.Tag)
+		}
+	})
+
+	// 测试To头部
+	t.Run("To头部解析", func(t *testing.T) {
+		if string(result.To.User) != "12345678901" {
+			t.Errorf("To用户错误，期望'12345678901'，得到'%s'", result.To.User)
+		}
+		if string(result.To.Host) != "192.0.2.1" {
+			t.Errorf("To主机错误，期望'192.0.2.1'，得到'%s'", result.To.Host)
+		}
+		if string(result.To.Port) != "5060" {
+			t.Errorf("To端口错误，期望'5060'，得到'%s'", result.To.Port)
+		}
+		if string(result.To.Tag) != "489aa49a2e1e92dd" {
+			t.Errorf("To标签错误，期望'489aa49a2e1e92dd'，得到'%s'", result.To.Tag)
+		}
+	})
+
+	// 测试Call-ID头部
+	t.Run("Call-ID头部解析", func(t *testing.T) {
+		if string(result.CallId.Value) != "6cbe3a91-7c3e-123e-91b3-5254003ac0b9" {
+			t.Errorf("Call-ID错误，期望'6cbe3a91-7c3e-123e-91b3-5254003ac0b9'，得到'%s'", result.CallId.Value)
+		}
+	})
+
+	// 测试CSeq头部
+	t.Run("CSeq头部解析", func(t *testing.T) {
+		if string(result.Cseq.Id) != "96467617" {
+			t.Errorf("CSeq ID错误，期望'96467617'，得到'%s'", result.Cseq.Id)
+		}
+		if string(result.Cseq.Method) != "INVITE" {
+			t.Errorf("CSeq方法错误，期望'INVITE'，得到'%s'", result.Cseq.Method)
+		}
+	})
+
+	// 测试Contact头部
+	t.Run("Contact头部解析", func(t *testing.T) {
+		if string(result.Contact.User) != "12345678901" {
+			t.Errorf("Contact用户错误，期望'12345678901'，得到'%s'", result.Contact.User)
+		}
+		if string(result.Contact.Host) != "192.0.2.1" {
+			t.Errorf("Contact主机错误，期望'192.0.2.1'，得到'%s'", result.Contact.Host)
+		}
+		if string(result.Contact.Port) != "5060" {
+			t.Errorf("Contact端口错误，期望'5060'，得到'%s'", result.Contact.Port)
+		}
+	})
+
+	// 测试Content-Type头部
+	t.Run("Content-Type头部解析", func(t *testing.T) {
+		if string(result.ContType.Value) != "application/sdp" {
+			t.Errorf("Content-Type错误，期望'application/sdp'，得到'%s'", result.ContType.Value)
+		}
+	})
+
+	// 测试Content-Length头部
+	t.Run("Content-Length头部解析", func(t *testing.T) {
+		if string(result.ContLen.Value) != "200" {
+			t.Errorf("Content-Length错误，期望'200'，得到'%s'", result.ContLen.Value)
+		}
+	})
+
+	// 测试SDP信息
+	t.Run("SDP解析", func(t *testing.T) {
+		// 测试连接数据
+		t.Run("连接数据", func(t *testing.T) {
+			if !strings.Contains(string(result.Sdp.ConnData.AddrType), "IP4") {
+				t.Errorf("地址类型错误，期望包含'IP4'，得到'%s'", result.Sdp.ConnData.AddrType)
+			}
+			if string(result.Sdp.ConnData.ConnAddr) != "192.0.2.4" {
+				t.Errorf("连接地址错误，期望'192.0.2.4'，得到'%s'", result.Sdp.ConnData.ConnAddr)
+			}
+		})
+
+		// 测试媒体描述
+		t.Run("媒体描述", func(t *testing.T) {
+			if string(result.Sdp.MediaDesc.MediaType) != "audio" {
+				t.Errorf("媒体类型错误，期望'audio'，得到'%s'", result.Sdp.MediaDesc.MediaType)
+			}
+			if string(result.Sdp.MediaDesc.Port) != "22818" {
+				t.Errorf("媒体端口错误，期望'22818'，得到'%s'", result.Sdp.MediaDesc.Port)
+			}
+			if string(result.Sdp.MediaDesc.Proto) != "RTP/AVP" {
+				t.Errorf("媒体协议错误，期望'RTP/AVP'，得到'%s'", result.Sdp.MediaDesc.Proto)
+			}
+			if string(result.Sdp.MediaDesc.Fmt) != "8 101" {
+				t.Errorf("媒体格式错误，期望'8 101'，得到'%s'", result.Sdp.MediaDesc.Fmt)
+			}
+		})
+
+		// 测试SDP属性
+		t.Run("SDP属性", func(t *testing.T) {
+			// 检查是否有足够的属性
+			if len(result.Sdp.Attrib) < 4 {
+				t.Errorf("SDP属性数量不足，期望至少4个，实际只有%d个", len(result.Sdp.Attrib))
+				return
+			}
+
+			// 验证几个关键属性的存在
+			foundRtpmapPCMA := false
+			foundRtpmapEvent := false
+			foundFmtp := false
+			foundSendRecv := false
+
+			for _, attr := range result.Sdp.Attrib {
+				// 检查 rtpmap:8 PCMA/8000
+				if string(attr.Cat) == "rtpmap" && strings.Contains(string(attr.Val), "8 PCMA") {
+					foundRtpmapPCMA = true
+				}
+				// 检查 rtpmap:101 telephone-event/8000
+				if string(attr.Cat) == "rtpmap" && strings.Contains(string(attr.Val), "101 telephone-event") {
+					foundRtpmapEvent = true
+				}
+				// 检查 fmtp:101 0-15
+				if string(attr.Cat) == "fmtp" && strings.Contains(string(attr.Val), "101 0-15") {
+					foundFmtp = true
+				}
+				// 检查 sendrecv
+				if string(attr.Cat) == "sendrecv" {
+					foundSendRecv = true
+				}
+			}
+
+			if !foundRtpmapPCMA {
+				t.Errorf("未找到PCMA rtpmap属性")
+			}
+			if !foundRtpmapEvent {
+				t.Errorf("未找到telephone-event rtpmap属性")
+			}
+			if !foundFmtp {
+				t.Errorf("未找到fmtp属性")
+			}
+			if !foundSendRecv {
+				t.Errorf("未找到sendrecv属性")
+			}
+		})
+	})
 }
