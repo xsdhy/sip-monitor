@@ -45,11 +45,11 @@ func (r *GormRepository) buildSearchQuery(db *gorm.DB, params entity.SearchParam
 	}
 
 	if params.SrcHost != "" {
-		query = query.Where("src_host = ?", params.SrcHost)
+		query = query.Where("src_addr = ?", params.SrcHost)
 	}
 
 	if params.DstHost != "" {
-		query = query.Where("dst_host = ?", params.DstHost)
+		query = query.Where("dst_addr = ?", params.DstHost)
 	}
 
 	if params.HangupCode != "" {
