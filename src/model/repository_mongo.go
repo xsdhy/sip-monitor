@@ -347,6 +347,52 @@ func (r *MongoRepository) CreateDefaultAdminUser(ctx context.Context) error {
 	return nil
 }
 
+func (r *MongoRepository) GetSIPCallRecordBySIPCallID(ctx context.Context, sipCallID string) (*entity.SIPRecordCall, error) {
+	var record entity.SIPRecordCall
+	err := r.recordCallCollection.FindOne(ctx, bson.M{"sip_call_id": sipCallID}).Decode(&record)
+	if err != nil {
+		return nil, err
+	}
+	return &record, nil
+}
+
+func (r *MongoRepository) GetRecordsBySIPCallIDs(ctx context.Context, sipCallIDs []string) ([]entity.Record, error) {
+	var records []entity.Record
+	filter := bson.M{"sip_call_id": bson.M{"$in": sipCallIDs}}
+	opts := r.getSortOptions(entity.SearchParams{})
+	cursor, err := r.recordCollection.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	if err = cursor.All(ctx, &records); err != nil {
+		return nil, err
+	}
+
+	return records, nil
+}
+
+func (r *MongoRepository) GetSIPCallIDsBySessionID(ctx context.Context, sessionID string) ([]string, error) {
+	var sipCallIDs []string
+	cursor, err := r.recordCallCollection.Find(ctx, bson.M{"session_id": sessionID})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var record entity.SIPRecordCall
+		err = cursor.Decode(&record)
+		if err != nil {
+			return nil, err
+		}
+		sipCallIDs = append(sipCallIDs, record.SIPCallID)
+	}
+
+	return sipCallIDs, nil
+}
+
 func (r *MongoRepository) GetUsers(ctx context.Context) ([]entity.User, error) {
 	var users []entity.User
 	cursor, err := r.db.Collection("users").Find(ctx, bson.M{})

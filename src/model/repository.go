@@ -13,10 +13,13 @@ type Repository interface {
 	GetRecordList(ctx context.Context, params entity.SearchParams) ([]entity.Record, *entity.Meta, error)
 	DeleteRecord(ctx context.Context, id string) error
 	GetRecordsBySIPCallID(ctx context.Context, sipCallID string) ([]entity.Record, error)
+	GetRecordsBySIPCallIDs(ctx context.Context, sipCallIDs []string) ([]entity.Record, error)
 
 	// SIP Call record operations
 	CreateSIPCallRecord(ctx context.Context, record *entity.SIPRecordCall) error
 	GetSIPCallRecordByID(ctx context.Context, id string) (*entity.SIPRecordCall, error)
+	GetSIPCallRecordBySIPCallID(ctx context.Context, sipCallID string) (*entity.SIPRecordCall, error)
+	GetSIPCallIDsBySessionID(ctx context.Context, sessionID string) ([]string, error)
 	GetSIPCallRecordList(ctx context.Context, params entity.SearchParams) ([]entity.SIPRecordCall, *entity.Meta, error)
 	DeleteSIPCallRecord(ctx context.Context, id string) error
 

@@ -1,7 +1,6 @@
 export interface CallRecordDetailsVO {
     code: number
-    data: CallRecordEntity[]
-    meta: MetaVO
+    data: CallDetailsVO
     msg: string
     time: string
 }
@@ -50,6 +49,11 @@ export interface CallRecordEntity {
     raw: string
 }
 
+
+export interface CallDetailsVO {
+    records: CallRecordEntity[]
+    relevants: CallRecordEntity[]
+}
 
 export interface SIPRecordCall {
     id: string;

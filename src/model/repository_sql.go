@@ -150,6 +150,24 @@ func (r *GormRepository) GetRecordsBySIPCallID(ctx context.Context, sipCallID st
 	return records, nil
 }
 
+func (r *GormRepository) GetRecordsBySIPCallIDs(ctx context.Context, sipCallIDs []string) ([]entity.Record, error) {
+	var records []entity.Record
+	err := r.db.WithContext(ctx).Where("sip_call_id IN ?", sipCallIDs).Order("timestamp_micro").Find(&records).Error
+	if err != nil {
+		return nil, err
+	}
+	return records, nil
+}
+
+func (r *GormRepository) GetSIPCallIDsBySessionID(ctx context.Context, sessionID string) ([]string, error) {
+	var sipCallIDs []string
+	err := r.db.WithContext(ctx).Model(&entity.SIPRecordCall{}).Where("session_id = ?", sessionID).Distinct().Pluck("sip_call_id", &sipCallIDs).Error
+	if err != nil {
+		return nil, err
+	}
+	return sipCallIDs, nil
+}
+
 // SIP Call record operations
 
 // CreateSIPCallRecord creates a new SIP call record
@@ -169,6 +187,15 @@ func (r *GormRepository) GetSIPCallRecordByID(ctx context.Context, id string) (*
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
+		return nil, err
+	}
+	return &record, nil
+}
+
+func (r *GormRepository) GetSIPCallRecordBySIPCallID(ctx context.Context, sipCallID string) (*entity.SIPRecordCall, error) {
+	var record entity.SIPRecordCall
+	err := r.db.WithContext(ctx).Where("sip_call_id = ?", sipCallID).First(&record).Error
+	if err != nil {
 		return nil, err
 	}
 	return &record, nil
@@ -343,7 +370,6 @@ func (r *GormRepository) DeleteUser(ctx context.Context, id int64) error {
 }
 
 func (r *GormRepository) CreateDefaultAdminUser(ctx context.Context) error {
-
 	var userNum int64
 	err := r.db.WithContext(ctx).Model(&entity.User{}).Count(&userNum).Error
 	if err != nil {

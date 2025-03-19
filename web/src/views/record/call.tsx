@@ -1,4 +1,4 @@
-import {Button, Space, Table} from 'antd'
+import {Button, Space, Table, Tag} from 'antd'
 import {SearchForm} from '../../components/SearchFrom'
 import {CallRecordListDTO} from '../../@types/dto_list'
 import {useEffect, useState} from 'react'
@@ -27,19 +27,14 @@ function RecordCall() {
             title: '主叫',
             dataIndex: 'from_user',
             key: 'from_user',
-           
-            ellipsis: true,
             fixed: 'left',
         },
         {
             title: '被叫',
             dataIndex: 'to_user',
             key: 'to_user',
-
-            ellipsis: true,
             fixed: 'left',
         },
-
         {
             title: '来源',
             dataIndex: 'src_host',
@@ -57,7 +52,6 @@ function RecordCall() {
                     {record.create_time ? "创建:"+dayjs(record.create_time).format('YYYY-MM-DD HH:mm:ss') : ""}
                     <br/>
                     {record.end_time ? "结束:"+dayjs(record.end_time).format('YYYY-MM-DD HH:mm:ss') : ""}
-                    
                     </div>
             },
         },
@@ -74,20 +68,19 @@ function RecordCall() {
             },
         },
         {
+            title: '通话时长',
+            key: 'duration',
+            width: 240,
+            render: (_, record) => {
+                return <div><Tag color="blue">总时长:{record.call_duration}s</Tag>  <Tag color="default">振铃:{record.ringing_duration}s</Tag>  <Tag color="green">通话:{record.talk_duration}s</Tag></div>
+            },
+        },
+        {
             title: 'Code',
             dataIndex: 'hangup_code',
             key: 'hangup_code',
             render: (_, record) => {
-                return <div>{record.hangup_code}<br/>{record.hangup_cause}</div>
-            },
-        },
-        {
-            title: 'CallID',
-            dataIndex: 'sip_call_id',
-            key: 'sip_call_id',
-            fixed: 'right',
-            render: (_, record) => {
-                return <div>CallID:{record.sip_call_id}<br/>SessionID:{record.session_id}</div>
+                return <div>{record.hangup_code}({record.hangup_cause})</div>
             },
         },
         {
@@ -130,12 +123,8 @@ function RecordCall() {
 
     return (<div>
             <h3>呼叫管理</h3>
-            <div style={{
-                lineHeight: 3, display: "flex", justifyContent: "space-between",
-            }}>
-                <Space>
-                    <SearchForm search={Search}/>
-                </Space>
+            <div style={{lineHeight: 3, display: "flex", justifyContent: "space-between",}}>
+            <SearchForm search={Search}/>
             </div>
 
             <Table scroll={{x: 1300}}
@@ -144,6 +133,7 @@ function RecordCall() {
                    dataSource={calls}
                    loading={loading}
                    pagination={false}
+                   bordered
                    footer={() => (<CommonPagination
                        onChange={(page: number) => {
                            setListPage(page);

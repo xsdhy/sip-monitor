@@ -48,11 +48,6 @@ export function SearchForm(p: Prop) {
     };
 
     return (
-        <div style={{ 
-            background: 'transparent', 
-            padding: '16px 0',
-            marginBottom: '12px'
-        }}>
             <Form
                 form={form}
                 name="search_form"
@@ -144,6 +139,6 @@ export function SearchForm(p: Prop) {
                     </>
                 )}
             </Form>
-        </div>
+
     )
 }

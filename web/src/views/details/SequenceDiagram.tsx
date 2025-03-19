@@ -20,14 +20,14 @@ export default function SequenceDiagram(p: Prop) {
 
     const ssdRef = useRef<HTMLDivElement>(null)
 
-    const [seq, setSeq] = useState<CallRecordEntity[]>([])
-
+    const [records, setRecords] = useState<CallRecordEntity[]>([])
+    const [relevants, setRelevants] = useState<CallRecordEntity[]>([])
     //消息详情弹窗
-    const [seqMessageItem, setSeqMessageItem] = useState<CallRecordEntity>()
-    const [seqMessageItemModelShow, setSeqMessageItemModelShow] = useState(false)
+    const [recordItem, setRecordItem] = useState<CallRecordEntity>()
+    const [recordItemModelShow, setRecordItemModelShow] = useState(false)
 
     const ShowEmpty=()=>{
-        if (!loading && seq.length<=0){
+        if (!loading && records.length<=0){
             return <Empty/>
         }else {
             return <></>
@@ -35,7 +35,7 @@ export default function SequenceDiagram(p: Prop) {
     }
 
     useEffect(() => {
-        if (seq.length > 0 && ssdRef.current) {
+        if (records.length > 0 && ssdRef.current) {
             // 初始化 mermaid
             mermaid.initialize({
                 startOnLoad: true,
@@ -59,7 +59,7 @@ export default function SequenceDiagram(p: Prop) {
             // 创建新的图表容器
             const container = document.createElement('div')
             container.className = 'mermaid'
-            container.innerHTML = createSeqHtml(seq)
+            container.innerHTML = createSeqHtml(records)
             ssdRef.current.appendChild(container)
             
             // 渲染图表
@@ -77,7 +77,7 @@ export default function SequenceDiagram(p: Prop) {
                 if (textElement) {
                     const messageText = textElement.textContent || '';
                     // 在序列中查找对应的消息
-                    const messageIndex = seq.findIndex((item, index) => {
+                    const messageIndex = records.findIndex((item, index) => {
                         const expectedText = `${item.sip_method} `;
                         if (item.sip_method === 'INVITE') {
                             return messageText.includes(`${item.sip_method} ${item.from_user} -> ${item.to_user}`);
@@ -86,8 +86,8 @@ export default function SequenceDiagram(p: Prop) {
                     });
                     
                     if (messageIndex !== -1) {
-                        setSeqMessageItem(seq[messageIndex]);
-                        setSeqMessageItemModelShow(true);
+                        setRecordItem(records[messageIndex]);
+                        setRecordItemModelShow(true);
                     }
                 }
             });
@@ -98,14 +98,16 @@ export default function SequenceDiagram(p: Prop) {
                 ssdRef.current.innerHTML = ''
             }
         }
-    }, [seq])
+    }, [records])
 
     useEffect(() => {
         const searchParams = new URLSearchParams(window.location.search);
         const sipCallId = p.callID || searchParams.get('sip_call_id') || "";
 
         AppAxios.get<CallRecordDetailsVO>(`/record/details?sip_call_id=` + sipCallId).then(res => {
-            setSeq(res.data.data)
+
+            setRecords(res.data.data.records)
+            setRelevants(res.data.data.relevants)
             setLoading(false)
         })
     }, [])
@@ -120,22 +122,22 @@ export default function SequenceDiagram(p: Prop) {
                 <Modal
                     centered
                     width="80%"
-                    open={seqMessageItemModelShow}
+                    open={recordItemModelShow}
                     onCancel={() => {
-                        setSeqMessageItemModelShow(false)
+                        setRecordItemModelShow(false)
                     }}
                     onOk={() => {
-                        setSeqMessageItemModelShow(false)
+                        setRecordItemModelShow(false)
                     }}
-                    key={seqMessageItem?.sip_call_id}
-                    title={`${seqMessageItem?.sip_method} ${FormatToDateTime(seqMessageItem?.create_time)}`}>
+                    key={recordItem?.sip_call_id}
+                    title={`${recordItem?.sip_method} ${FormatToDateTime(recordItem?.create_time)}`}>
                     <p>
-                        <Tag color="blue">{dayjs(seqMessageItem?.create_time).format('YYYY-MM-DD HH:mm:ss')}</Tag>
-                        <Tag color="cyan">{getProtocolName(seqMessageItem?.sip_protocol ? seqMessageItem?.sip_protocol : 0)}</Tag>
-                        <Tag color="magenta">length: {seqMessageItem?.raw.length}B</Tag>
+                        <Tag color="blue">{dayjs(recordItem?.create_time).format('YYYY-MM-DD HH:mm:ss')}</Tag>
+                        <Tag color="cyan">{getProtocolName(recordItem?.sip_protocol ? recordItem?.sip_protocol : 0)}</Tag>
+                        <Tag color="magenta">length: {recordItem?.raw.length}B</Tag>
                     </p>
                     <div>
-                        <pre style={{overflowX: 'scroll'}}>{seqMessageItem?.raw}</pre>
+                        <pre style={{overflowX: 'scroll'}}>{recordItem?.raw}</pre>
                     </div>
                 </Modal>
             </Spin>

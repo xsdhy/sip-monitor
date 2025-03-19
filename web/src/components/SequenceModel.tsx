@@ -12,7 +12,7 @@ export function SequenceModel(p: Prop) {
 
 
 
-    // 第二种方法：使用 SVG 转 Canvas 直接转换
+
     const copyToClipboardAlternative = async () => {
         try {
             const mermaidContainer = document.querySelector('.mermaid');

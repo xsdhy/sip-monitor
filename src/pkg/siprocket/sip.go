@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"os"
 	"sip-monitor/src/entity"
 	"strings"
 )
@@ -42,6 +43,18 @@ type SdpMsg struct {
 type sipVal struct {
 	Value []byte // Sip Value
 	Src   []byte // Full source if needed
+}
+
+var (
+	HeaderNameSessionID = os.Getenv("HEADER_NAME_SESSION_ID")
+)
+
+func init() {
+	if HeaderNameSessionID == "" {
+		HeaderNameSessionID = strings.ToLower("X-JCallID")
+	} else {
+		HeaderNameSessionID = strings.ToLower(HeaderNameSessionID)
+	}
 }
 
 func (s *sipVal) ToString() string {
@@ -159,7 +172,7 @@ func Parse(v []byte) (output *SipMsg) {
 				output.MaxFwd.Value = headerVal
 			case "cseq":
 				parseSipCseq(headerVal, &output.Cseq)
-			case "x-jcallid":
+			case HeaderNameSessionID:
 				output.SessionID = string(headerVal)
 			}
 		}
@@ -199,7 +212,6 @@ func Parse(v []byte) (output *SipMsg) {
 
 // Finds the first valid Seperate or notes its type
 func indexSep(s []byte) (int, byte) {
-
 	for i := 0; i < len(s); i++ {
 		if s[i] == ':' {
 			return i, ':'

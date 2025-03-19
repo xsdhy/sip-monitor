@@ -110,6 +110,7 @@ const BackendLayout = () => {
     return (
         <ConfigProvider
             theme={{
+                algorithm: [ theme.compactAlgorithm],
                 token: {
                     "wireframe": false,
                     "borderRadius": 4,
@@ -119,7 +120,7 @@ const BackendLayout = () => {
             locale={zhCN}>
             <Layout style={{minHeight:"100vh"}}>
                 <Sider 
-                    width={120} 
+                    width={100} 
                     collapsible 
                     collapsed={collapsed} 
                     onCollapse={(value) => setCollapsed(value)}
@@ -170,12 +171,10 @@ const BackendLayout = () => {
                         {userData && (
                             <Dropdown menu={{ items: userMenu }} placement="bottomRight">
                                 <Button type="link" style={{ height: 64, display: 'flex', alignItems: 'center' }}>
-                                    <Badge dot>
-                                        <Avatar 
+                                <Avatar 
                                             style={{ backgroundColor: colorPrimary, marginRight: 8 }} 
                                             icon={<UserOutlined />} 
                                         />
-                                    </Badge>
                                     <span style={{ marginLeft: 8 }}>{userData.nickname || userData.username}</span>
                                 </Button>
                             </Dropdown>

@@ -80,7 +80,7 @@ func main() {
 	// 记录相关API
 	authorized.GET("/record/call", handleHttp.RecordCallList)
 	authorized.GET("/record/register", handleHttp.RecordRegisterList)
-	authorized.GET("/record/details", handleHttp.SearchCallID)
+	authorized.GET("/record/details", handleHttp.CallDetails)
 
 	// 用户管理API
 	authorized.GET("/users", handleHttp.UserList)

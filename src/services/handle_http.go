@@ -35,27 +35,63 @@ func (h *HandleHttp) RecordCallList(c *gin.Context) {
 	util.SendItems(c, nil, records, meta)
 }
 
-func (h *HandleHttp) SearchCallID(c *gin.Context) {
+func (h *HandleHttp) CallDetails(c *gin.Context) {
 	sipCallID := c.Query("sip_call_id")
-	var messages []entity.SIP
+
+	callItem, err := h.repository.GetSIPCallRecordBySIPCallID(c, sipCallID)
+	if err != nil {
+		util.SendResponse(c, nil, entity.CallDetailsVO{})
+		return
+	}
+
+	var vo entity.CallDetailsVO
+
+	vo.Records = make([]entity.SIP, 0)
+	vo.Relevants = make([]entity.SIP, 0)
+
 	records, _ := h.repository.GetRecordsBySIPCallID(c, sipCallID)
 	for _, record := range records {
-
 		sip := siprocket.ParseSIP([]byte(record.Raw))
 		if sip == nil {
 			continue
 		}
-
 		sip.CreateTime = record.CreateTime
 		sip.TimestampMicro = record.TimestampMicro
-
 		sip.SrcAddr = strings.ReplaceAll(record.SrcAddr, ":", "_")
 		sip.DstAddr = strings.ReplaceAll(record.DstAddr, ":", "_")
-
 		sip.Raw = &record.Raw
-		messages = append(messages, *sip)
+		vo.Records = append(vo.Records, *sip)
 	}
-	util.SendItems(c, nil, messages, nil)
+	if callItem.SessionID == "" {
+		util.SendResponse(c, nil, vo)
+		return
+	}
+
+	sipCallIDs, err := h.repository.GetSIPCallIDsBySessionID(c, callItem.SessionID)
+	if err != nil {
+		util.SendResponse(c, nil, vo)
+		return
+	}
+
+	relevantRecords, err := h.repository.GetRecordsBySIPCallIDs(c, sipCallIDs)
+	if err != nil {
+		util.SendResponse(c, nil, vo)
+		return
+	}
+
+	for _, record := range relevantRecords {
+		sip := siprocket.ParseSIP([]byte(record.Raw))
+		if sip == nil {
+			continue
+		}
+		sip.CreateTime = record.CreateTime
+		sip.TimestampMicro = record.TimestampMicro
+		sip.SrcAddr = strings.ReplaceAll(record.SrcAddr, ":", "_")
+		sip.DstAddr = strings.ReplaceAll(record.DstAddr, ":", "_")
+		sip.Raw = &record.Raw
+		vo.Relevants = append(vo.Relevants, *sip)
+	}
+	util.SendResponse(c, nil, vo)
 }
 
 func (h *HandleHttp) RecordRegisterList(c *gin.Context) {

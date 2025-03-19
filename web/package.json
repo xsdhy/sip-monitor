@@ -5,7 +5,7 @@
   "dependencies": {
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
-    "antd": "^5.13.2",
+    "antd": "^5.24.4",
     "axios": "^1.6.5",
     "dayjs": "^1.11.10",
     "eslint": "^8.56.0",

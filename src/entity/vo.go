@@ -24,3 +24,8 @@ type Meta struct {
 	PageSize int64 `json:"page_size"`
 	Total    int64 `json:"total"`
 }
+
+type CallDetailsVO struct {
+	Records   []SIP `json:"records"`
+	Relevants []SIP `json:"relevants"`
+}
