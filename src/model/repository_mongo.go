@@ -148,7 +148,7 @@ func (r *MongoRepository) GetRecordList(ctx context.Context, params entity.Searc
 }
 
 // DeleteRecord deletes a record from MongoDB
-func (r *MongoRepository) DeleteRecord(ctx context.Context, id string) error {
+func (r *MongoRepository) DeleteRecord(ctx context.Context, id int64) error {
 	_, err := r.recordCollection.DeleteOne(ctx, bson.M{"_id": id})
 	return err
 }
@@ -405,4 +405,26 @@ func (r *MongoRepository) GetUsers(ctx context.Context) ([]entity.User, error) {
 	}
 
 	return users, nil
+}
+
+func (r *MongoRepository) GetRecordRawByID(ctx context.Context, id int64) (*entity.RecordRaw, error) {
+	var recordRaw entity.RecordRaw
+	err := r.recordCollection.FindOne(ctx, bson.M{"_id": id}).Decode(&recordRaw)
+	if err != nil {
+		return nil, err
+	}
+	return &recordRaw, nil
+}
+
+func (r *MongoRepository) DeleteRecordRaw(ctx context.Context, id int64) error {
+	_, err := r.recordCollection.DeleteOne(ctx, bson.M{"_id": id})
+	return err
+}
+
+func (r *MongoRepository) CreateRecordRaw(ctx context.Context, record *entity.RecordRaw) error {
+	_, err := r.recordCollection.InsertOne(ctx, record)
+	return err
+}
+func (r *MongoRepository) GetRecordRawList(ctx context.Context, params entity.SearchParams) ([]entity.RecordRaw, *entity.Meta, error) {
+	return nil, nil, nil
 }

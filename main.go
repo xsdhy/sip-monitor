@@ -81,6 +81,7 @@ func main() {
 	authorized.GET("/record/call", handleHttp.RecordCallList)
 	authorized.GET("/record/register", handleHttp.RecordRegisterList)
 	authorized.GET("/record/details", handleHttp.CallDetails)
+	authorized.GET("/record/raw/:id", handleHttp.RecordRaw)
 
 	// 用户管理API
 	authorized.GET("/users", handleHttp.UserList)

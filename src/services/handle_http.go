@@ -4,9 +4,7 @@ import (
 	"sip-monitor/src/config"
 	"sip-monitor/src/entity"
 	"sip-monitor/src/model"
-	"sip-monitor/src/pkg/siprocket"
 	"sip-monitor/src/pkg/util"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -46,22 +44,11 @@ func (h *HandleHttp) CallDetails(c *gin.Context) {
 
 	var vo entity.CallDetailsVO
 
-	vo.Records = make([]entity.SIP, 0)
-	vo.Relevants = make([]entity.SIP, 0)
+	vo.Records = make([]entity.Record, 0)
+	vo.Relevants = make([]entity.Record, 0)
 
-	records, _ := h.repository.GetRecordsBySIPCallID(c, sipCallID)
-	for _, record := range records {
-		sip := siprocket.ParseSIP([]byte(record.Raw))
-		if sip == nil {
-			continue
-		}
-		sip.CreateTime = record.CreateTime
-		sip.TimestampMicro = record.TimestampMicro
-		sip.SrcAddr = strings.ReplaceAll(record.SrcAddr, ":", "_")
-		sip.DstAddr = strings.ReplaceAll(record.DstAddr, ":", "_")
-		sip.Raw = &record.Raw
-		vo.Records = append(vo.Records, *sip)
-	}
+	vo.Records, _ = h.repository.GetRecordsBySIPCallID(c, sipCallID)
+
 	if callItem.SessionID == "" {
 		util.SendResponse(c, nil, vo)
 		return
@@ -72,26 +59,24 @@ func (h *HandleHttp) CallDetails(c *gin.Context) {
 		util.SendResponse(c, nil, vo)
 		return
 	}
+	vo.Relevants, _ = h.repository.GetRecordsBySIPCallIDs(c, sipCallIDs)
 
-	relevantRecords, err := h.repository.GetRecordsBySIPCallIDs(c, sipCallIDs)
+	util.SendResponse(c, nil, vo)
+}
+
+func (h *HandleHttp) RecordRaw(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := util.ParseInt64(idStr)
 	if err != nil {
-		util.SendResponse(c, nil, vo)
+		util.SendError(c, err)
 		return
 	}
-
-	for _, record := range relevantRecords {
-		sip := siprocket.ParseSIP([]byte(record.Raw))
-		if sip == nil {
-			continue
-		}
-		sip.CreateTime = record.CreateTime
-		sip.TimestampMicro = record.TimestampMicro
-		sip.SrcAddr = strings.ReplaceAll(record.SrcAddr, ":", "_")
-		sip.DstAddr = strings.ReplaceAll(record.DstAddr, ":", "_")
-		sip.Raw = &record.Raw
-		vo.Relevants = append(vo.Relevants, *sip)
+	recordRaw, err := h.repository.GetRecordRawByID(c, id)
+	if err != nil {
+		util.SendError(c, err)
+		return
 	}
-	util.SendResponse(c, nil, vo)
+	util.SendSuccessWithData(c, recordRaw)
 }
 
 func (h *HandleHttp) RecordRegisterList(c *gin.Context) {

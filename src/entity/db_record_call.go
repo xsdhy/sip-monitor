@@ -7,7 +7,7 @@ import (
 // SIPRecordCall represents a complete call record extracted from SIP signaling
 type SIPRecordCall struct {
 	// ID field - primary key
-	ID int64 `gorm:"primaryKey;column:id;autoIncrement:true" bson:"_id" json:"id"`
+	ID int64 `gorm:"primaryKey;column:id;type:bigint unsigned;autoIncrement:true" bson:"_id" json:"id"`
 
 	// NodeIP represents the IP of the node that collected the signal
 	NodeIP string `gorm:"column:node_ip;type:varchar(25);index;default:''" bson:"node_ip" json:"node_ip"`
@@ -18,9 +18,9 @@ type SIPRecordCall struct {
 	SessionID string `gorm:"column:session_id;type:varchar(120);index;default:''" bson:"session_id" json:"session_id"`
 
 	// Call participants information
-	ToUser    string `gorm:"column:to_user;type:varchar(120);index;default:''" bson:"to_user" json:"to_user"`       // Called party
-	FromUser  string `gorm:"column:from_user;type:varchar(120);index;default:''" bson:"from_user" json:"from_user"` // Calling party
-	UserAgent string `gorm:"column:user_agent;type:varchar(120);default:''" bson:"user_agent" json:"user_agent"`    // User agent
+	ToUser    string `gorm:"column:to_user;type:varchar(120);index;default:''" bson:"to_user" json:"to_user"`
+	FromUser  string `gorm:"column:from_user;type:varchar(120);index;default:''" bson:"from_user" json:"from_user"`
+	UserAgent string `gorm:"column:user_agent;type:varchar(120);default:''" bson:"user_agent" json:"user_agent"` // User agent
 
 	SrcAddr string `gorm:"column:src_addr;type:varchar(25);default:''" bson:"src_addr" json:"src_addr"` // Source address
 	DstAddr string `gorm:"column:dst_addr;type:varchar(25);default:''" bson:"dst_addr" json:"dst_addr"` // Destination address

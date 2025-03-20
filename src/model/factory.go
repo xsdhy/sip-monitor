@@ -13,6 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -20,9 +21,10 @@ import (
 )
 
 const (
-	DBTypeMySQL   = "mysql"
-	DBTypeSQLite  = "sqlite"
-	DBTypeMongoDB = "mongodb"
+	DBTypeMySQL    = "mysql"
+	DBTypeSQLite   = "sqlite"
+	DBTypeMongoDB  = "mongodb"
+	DBTypePostgres = "postgres"
 )
 
 // RepositoryFactory creates the appropriate repository implementation based on database type
@@ -53,6 +55,8 @@ func (f *RepositoryFactory) CreateRepository(cfg *config.Config) (Repository, er
 		return f.createSQLiteRepository(cfg)
 	case DBTypeMongoDB:
 		return f.createMongoRepository(cfg)
+	case DBTypePostgres:
+		return f.createPostgresRepository(cfg)
 	default:
 		return nil, fmt.Errorf("unsupported database type: %s", cfg.DBType)
 	}
@@ -134,6 +138,28 @@ func (f *RepositoryFactory) createMongoRepository(cfg *config.Config) (Repositor
 	return NewMongoRepository(md), nil
 }
 
+// createPostgresRepository creates a PostgreSQL repository
+func (f *RepositoryFactory) createPostgresRepository(cfg *config.Config) (Repository, error) {
+	dsn := cfg.DSNURL
+	if dsn == "" {
+		// Construct DSN from individual components
+		dsn = fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=UTC",
+			cfg.DBAddr, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBPort)
+	}
+
+	db, err := f.openGormDB(postgres.Open(dsn))
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to PostgreSQL: %w", err)
+	}
+
+	// Auto-migrate schema
+	if err := f.migrateSchema(db); err != nil {
+		return nil, fmt.Errorf("failed to migrate schema: %w", err)
+	}
+
+	return NewGormRepository(db), nil
+}
+
 // openGormDB opens a GORM database connection with standardized configuration
 func (f *RepositoryFactory) openGormDB(dialector gorm.Dialector) (*gorm.DB, error) {
 	// Configure GORM logger
@@ -175,6 +201,7 @@ func (f *RepositoryFactory) openGormDB(dialector gorm.Dialector) (*gorm.DB, erro
 func (f *RepositoryFactory) migrateSchema(db *gorm.DB) error {
 	return db.AutoMigrate(
 		&entity.Record{},
+		&entity.RecordRaw{},
 		&entity.SIPRecordCall{},
 		&entity.SIPRecordRegister{},
 		&entity.User{},

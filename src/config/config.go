@@ -24,6 +24,7 @@ type Config struct {
 	DBAddr     string `env:"DBAddr" envDefault:""`
 	DBName     string `env:"DBName" envDefault:"monitor"`
 	DBPath     string `env:"DBPath" envDefault:""`
+	DBPort     string `env:"DBPort" envDefault:"3306"`
 
 	// JWT Authentication settings
 	JWTSecret      string `env:"JWT_SECRET" envDefault:"sip-monitor-secret-key"`

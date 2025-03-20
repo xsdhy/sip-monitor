@@ -110,18 +110,32 @@ func (s *SaveService) SaveOptimized(item entity.SIP) {
 		if item.CallID == "" {
 			return
 		}
+		ctx := context.TODO()
 		// 将SIP转换为Record
 		record := entity.Record{
 			NodeIP:         item.NodeIP,
 			SIPCallID:      item.CallID,
 			Method:         item.Title,
+			ResponseDesc:   item.ResponseDesc,
+			ToUser:         item.ToUser,
+			FromUser:       item.FromUser,
 			SrcAddr:        item.SrcAddr,
 			DstAddr:        item.DstAddr,
 			CreateTime:     item.CreateTime,
 			TimestampMicro: item.TimestampMicro,
-			Raw:            *item.Raw,
 		}
-		err := s.repository.CreateRecord(context.TODO(), &record)
+
+		err := s.repository.CreateRecord(ctx, &record)
+		if err != nil {
+			logrus.WithError(err).Error("保存SIP消息记录失败")
+			return
+		}
+
+		err = s.repository.CreateRecordRaw(ctx, &entity.RecordRaw{
+			ID:         record.ID,
+			Raw:        *item.Raw,
+			CreateTime: item.CreateTime,
+		})
 		if err != nil {
 			logrus.WithError(err).Error("保存SIP消息记录失败")
 			return
@@ -226,4 +240,15 @@ func (s *SaveService) updateCallRecordInCache(item entity.SIP) {
 			delete(s.callRecordCache, callID)
 		}
 	}
+}
+
+// 查询缓存中的呼叫记录列表和总数
+func (s *SaveService) GetCallRecordList() ([]*entity.SIPRecordCall, int) {
+	s.cacheMutex.RLock()
+	defer s.cacheMutex.RUnlock()
+	records := make([]*entity.SIPRecordCall, 0)
+	for _, record := range s.callRecordCache {
+		records = append(records, record)
+	}
+	return records, len(s.callRecordCache)
 }

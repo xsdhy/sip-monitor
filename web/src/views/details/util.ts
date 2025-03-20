@@ -42,11 +42,12 @@ export function createSeqHtml(seq: CallRecordEntity[]): string {
         if (index !== 0) {
             dis = seq[index].timestamp_micro/1000000 - seq[index - 1].timestamp_micro/1000000
         }
+        item.dst_addr=item.dst_addr.replace(":","_")
+        item.src_addr=item.src_addr.replace(":","_")
+        const arrow = isRequest(item.method) ? '->>' : '-->>'
+        let messageText = `${item.method} `
         
-        const arrow = isRequest(item.sip_method) ? '->>' : '-->>'
-        let messageText = `${item.sip_method} `
-        
-        if (item.sip_method === 'INVITE') {
+        if (item.method === 'INVITE') {
             messageText += `${item.from_user} -> ${item.to_user} `
         }
         messageText += `${item.response_desc} ${dis.toFixed(2)}s`

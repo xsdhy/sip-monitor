@@ -7,11 +7,14 @@ import (
 
 // Repository defines the interface for database operations
 type Repository interface {
+	// Record raw operations
+	CreateRecordRaw(ctx context.Context, record *entity.RecordRaw) error
+	GetRecordRawByID(ctx context.Context, id int64) (*entity.RecordRaw, error)
+	DeleteRecordRaw(ctx context.Context, id int64) error
+
 	// Record operations
 	CreateRecord(ctx context.Context, record *entity.Record) error
-	GetRecordByID(ctx context.Context, id string) (*entity.Record, error)
-	GetRecordList(ctx context.Context, params entity.SearchParams) ([]entity.Record, *entity.Meta, error)
-	DeleteRecord(ctx context.Context, id string) error
+	DeleteRecord(ctx context.Context, id int64) error
 	GetRecordsBySIPCallID(ctx context.Context, sipCallID string) ([]entity.Record, error)
 	GetRecordsBySIPCallIDs(ctx context.Context, sipCallIDs []string) ([]entity.Record, error)
 

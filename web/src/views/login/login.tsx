@@ -64,8 +64,7 @@ const Login = () => {
                     right: '100px'
                 }}
             />
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-
+            <div style={{ display: 'flex',width: '30%', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                     <Card
                         style={{
                             width: '100%',

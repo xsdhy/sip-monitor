@@ -69,6 +69,31 @@ func (r *GormRepository) calculatePagination(totalCount int64, page, pageSize in
 	return meta
 }
 
+// Record raw operations
+
+// CreateRecordRaw creates a new record raw
+func (r *GormRepository) CreateRecordRaw(ctx context.Context, record *entity.RecordRaw) error {
+	return r.db.WithContext(ctx).Create(record).Error
+}
+
+// GetRecordRawByID retrieves a record raw by ID
+func (r *GormRepository) GetRecordRawByID(ctx context.Context, id int64) (*entity.RecordRaw, error) {
+	var record entity.RecordRaw
+	err := r.db.WithContext(ctx).Where("id = ?", id).First(&record).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &record, nil
+}
+
+// DeleteRecordRaw deletes a record raw
+func (r *GormRepository) DeleteRecordRaw(ctx context.Context, id int64) error {
+	return r.db.WithContext(ctx).Where("id = ?", id).Delete(&entity.RecordRaw{}).Error
+}
+
 // Record operations
 
 // CreateRecord creates a new record
@@ -79,8 +104,12 @@ func (r *GormRepository) CreateRecord(ctx context.Context, record *entity.Record
 	return r.db.WithContext(ctx).Create(record).Error
 }
 
+func (r *GormRepository) DeleteRecord(ctx context.Context, id int64) error {
+	return r.db.WithContext(ctx).Where("id = ?", id).Delete(&entity.Record{}).Error
+}
+
 // GetRecordByID retrieves a record by ID
-func (r *GormRepository) GetRecordByID(ctx context.Context, id string) (*entity.Record, error) {
+func (r *GormRepository) GetRecordByID(ctx context.Context, id int64) (*entity.Record, error) {
 	var record entity.Record
 	err := r.db.WithContext(ctx).Where("id = ?", id).First(&record).Error
 	if err != nil {
@@ -134,11 +163,6 @@ func (r *GormRepository) GetRecordList(ctx context.Context, params entity.Search
 	meta := r.calculatePagination(totalCount, int(params.Page), int(params.PageSize))
 
 	return records, meta, nil
-}
-
-// DeleteRecord deletes a record
-func (r *GormRepository) DeleteRecord(ctx context.Context, id string) error {
-	return r.db.WithContext(ctx).Where("id = ?", id).Delete(&entity.Record{}).Error
 }
 
 func (r *GormRepository) GetRecordsBySIPCallID(ctx context.Context, sipCallID string) ([]entity.Record, error) {

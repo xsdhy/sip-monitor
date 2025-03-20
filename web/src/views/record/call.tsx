@@ -19,7 +19,6 @@ function RecordCall() {
     const [listPage, setListPage] = useState(1)
     const [listPageSize, setListPageSize] = useState(10)
 
-
     const [searchDTO, setSearchDTO] = useState<CallRecordListDTO>({})
 
     const columns: ColumnsType<SIPRecordCall> = [
@@ -38,7 +37,7 @@ function RecordCall() {
         {
             title: '来源',
             dataIndex: 'src_host',
-            width: 180,
+            width: 120,
             render: (_, record) => {
                 return <div>{record.src_addr}<br/>{record.dst_addr}</div>
             },
@@ -46,7 +45,7 @@ function RecordCall() {
         {
             title: '创建结束',
             key: 'create_time',
-            width: 240,
+            width: 180,
             render: (_, record) => {
                 return <div>
                     {record.create_time ? "创建:"+dayjs(record.create_time).format('YYYY-MM-DD HH:mm:ss') : ""}
@@ -58,7 +57,7 @@ function RecordCall() {
         {
             title: '振铃应答',
             key: 'ringing_time',
-            width: 240,
+            width: 180,
             render: (_, record) => {
                 return <div>
                     {record.ringing_time ? "振铃:"+dayjs(record.ringing_time).format('YYYY-MM-DD HH:mm:ss') : ""}
@@ -86,7 +85,7 @@ function RecordCall() {
         {
             title: 'Action',
             key: 'action',
-            width: 80,
+            width: 60,
             fixed: 'right',
             render: (_, record) => (
                 <Button type="link" onClick={() => {

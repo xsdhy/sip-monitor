@@ -4,7 +4,7 @@ import {Tag, Spin, Modal, Empty, Tabs} from 'antd'
 
 import mermaid from 'mermaid'
 import {createSeqHtml, getProtocolName} from './util'
-import {CallRecordDetailsVO, CallRecordEntity} from '../../@types/entity'
+import {CallRecordDetailsVO, CallRecordEntity, CallRecordRaw, CallRecordRawVO} from '../../@types/entity'
 import AppAxios from "../../utils/request";
 import dayjs from "dayjs";
 import {FormatToDateTime} from "../../utils/tools";
@@ -27,7 +27,7 @@ export default function SequenceDiagram(p: Prop) {
 
 
     //消息详情弹窗
-    const [recordItem, setRecordItem] = useState<CallRecordEntity>()
+    const [recordItem, setRecordItem] = useState<CallRecordRaw>()
     const [recordItemModelShow, setRecordItemModelShow] = useState(false)
 
     const ShowEmpty=()=>{
@@ -118,17 +118,22 @@ export default function SequenceDiagram(p: Prop) {
                 const messageText = textElement.textContent || '';
                 // 在序列中查找对应的消息
                 const messageIndex = data.findIndex((item, index) => {
-                    const expectedText = `${item.sip_method} `;
-                    if (item.sip_method === 'INVITE') {
-                        return messageText.includes(`${item.sip_method} ${item.from_user} -> ${item.to_user}`);
+                    const expectedText = `${item.method} `;
+                    if (item.method === 'INVITE') {
+                        return messageText.includes(`${item.method} ${item.from_user} -> ${item.to_user}`);
                     }
                     return messageText.includes(expectedText);
                 });
-                
-                if (messageIndex !== -1) {
-                    setRecordItem(data[messageIndex]);
+
+                // 根据item.id 获取record_raw
+               AppAxios.get<CallRecordRawVO>(`/record/raw/` + data[messageIndex].id).then(res=>{
+                if (res.data.code === 200) {
+                    setRecordItem(res.data.data);
                     setRecordItemModelShow(true);
                 }
+                })
+                
+         
             }
         });
     }
@@ -174,14 +179,10 @@ export default function SequenceDiagram(p: Prop) {
                     onOk={() => {
                         setRecordItemModelShow(false)
                     }}
-                    key={recordItem?.sip_call_id}
-                    title={`${recordItem?.sip_method} ${FormatToDateTime(recordItem?.create_time)}`}>
-                    <p>
-                        <Tag color="blue">{dayjs(recordItem?.create_time).format('YYYY-MM-DD HH:mm:ss')}</Tag>
-                        <Tag color="cyan">{getProtocolName(recordItem?.sip_protocol ? recordItem?.sip_protocol : 0)}</Tag>
-                        <Tag color="magenta">length: {recordItem?.raw.length}B</Tag>
-                    </p>
+                    key={recordItem?.id}
+                    title={`信令详情`}>
                     <div>
+
                         <pre style={{overflowX: 'scroll'}}>{recordItem?.raw}</pre>
                     </div>
                 </Modal>

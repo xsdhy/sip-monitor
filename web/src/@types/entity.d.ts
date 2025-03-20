@@ -5,6 +5,19 @@ export interface CallRecordDetailsVO {
     time: string
 }
 
+export interface CallRecordRawVO {
+    code: number
+    data: CallRecordRaw
+    msg: string
+    time: string
+}
+export interface CallRecordRaw {
+   id: number
+   create_time: string
+   raw: string
+}
+
+
 export interface CallRecordBaseVO {
     code: number
     data: T
@@ -22,31 +35,17 @@ export interface MetaVO {
 export interface CallRecordEntity {
     id: number
     sip_call_id: string
-    sip_method: string
-   
+    method: string
+    response_desc: string
 
     to_user: string
-
     from_user: string
-
-    response_code: number
-    response_desc: string
-    cseq_method: string
-    cseq_number: number
-
-
-    sip_protocol: number
-    sip_protocol_name?: string
-
-    is_request?: number
-    user_agent: string
 
     src_addr: string
     dst_addr: string
 
     create_time: string
     timestamp_micro: number
-    raw: string
 }
 
 

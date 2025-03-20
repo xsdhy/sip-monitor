@@ -26,6 +26,6 @@ type Meta struct {
 }
 
 type CallDetailsVO struct {
-	Records   []SIP `json:"records"`
-	Relevants []SIP `json:"relevants"`
+	Records   []Record `json:"records"`
+	Relevants []Record `json:"relevants"`
 }
