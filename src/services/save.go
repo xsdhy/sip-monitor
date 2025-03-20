@@ -107,11 +107,13 @@ func (s *SaveService) SaveOptimized(item entity.SIP) {
 
 	// 始终需要在Record表中，新增一条记录
 	go func() {
+		if item.CallID == "" {
+			return
+		}
 		// 将SIP转换为Record
 		record := entity.Record{
 			NodeIP:         item.NodeIP,
 			SIPCallID:      item.CallID,
-			SessionID:      item.SessionID,
 			Method:         item.Title,
 			SrcAddr:        item.SrcAddr,
 			DstAddr:        item.DstAddr,
