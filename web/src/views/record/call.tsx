@@ -1,4 +1,4 @@
-import {Button, Space, Table, Tag} from 'antd'
+import {Button, Table, Tag} from 'antd'
 import {SearchForm} from '../../components/SearchFrom'
 import {CallRecordListDTO} from '../../@types/dto_list'
 import {useEffect, useState} from 'react'
@@ -109,11 +109,11 @@ function RecordCall() {
         AppAxios.get('/record/call', {params: searchDTO})
             .then(res => {
                 // @ts-ignore
-                setCalls(res.data.data)
+                setCalls(res.data)
                 // @ts-ignore
-                setListTotal(res.data.meta.total)
+                setListTotal(res.meta.total)
                 // @ts-ignore
-                setListPageSize(res.data.meta.page_size)
+                setListPageSize(res.meta.page_size)
                 setLoading(false)
             })
             .catch()

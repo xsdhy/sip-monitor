@@ -27,11 +27,7 @@ const Users: React.FC = () => {
     setLoading(true);
     AppAxios.get('/users')
       .then(response => {
-        if (response.data.code === 200) {
-          setUsers(response.data.data);
-        } else {
-          message.error(response.data.msg || '获取用户列表失败');
-        }
+        setUsers(response.data);
       })
       .catch(error => {
         console.error('获取用户列表失败:', error);
@@ -77,17 +73,12 @@ const Users: React.FC = () => {
           // 更新用户
           AppAxios.put(`/users/${currentUser.id}`, values)
             .then(response => {
-              if (response.data.code === 200) {
-                message.success('更新用户成功');
-                setVisible(false);
-                fetchUsers();
-              } else {
-                message.error(response.data.msg || '更新用户失败');
-              }
+              message.success('更新用户成功');
+              setVisible(false);
+              fetchUsers();
             })
             .catch(error => {
               console.error('更新用户失败:', error);
-              message.error('更新用户失败');
             })
             .finally(() => {
               setConfirmLoading(false);
@@ -96,17 +87,13 @@ const Users: React.FC = () => {
           // 创建新用户
           AppAxios.post('/users', values)
             .then(response => {
-              if (response.data.code === 200) {
-                message.success('创建用户成功');
-                setVisible(false);
-                fetchUsers();
-              } else {
-                message.error(response.data.msg || '创建用户失败');
-              }
+              message.success('创建用户成功');
+              setVisible(false);
+              fetchUsers();
             })
             .catch(error => {
               console.error('创建用户失败:', error);
-              message.error('创建用户失败');
+
             })
             .finally(() => {
               setConfirmLoading(false);
@@ -122,12 +109,7 @@ const Users: React.FC = () => {
   const handleDelete = (id: number) => {
     AppAxios.delete(`/users/${id}`)
       .then(response => {
-        if (response.data.code === 200) {
-          message.success('删除用户成功');
-          fetchUsers();
-        } else {
-          message.error(response.data.msg || '删除用户失败');
-        }
+        message.success('删除用户成功');
       })
       .catch(error => {
         console.error('删除用户失败:', error);

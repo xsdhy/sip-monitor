@@ -1,16 +1,14 @@
-export interface CallRecordDetailsVO {
-    code: number
-    data: CallDetailsVO
-    msg: string
-    time: string
+export interface ResponseData<T = any> {
+    code: number;
+    data: T;
+    message: string;
+    meta?: MetaVO;
 }
 
-export interface CallRecordRawVO {
-    code: number
-    data: CallRecordRaw
-    msg: string
-    time: string
-}
+
+
+
+
 export interface CallRecordRaw {
    id: number
    create_time: string
@@ -124,3 +122,12 @@ export interface SystemDBStatsVO {
 
 
 }
+
+// 用户相关接口类型定义
+export interface UserInfo {
+    id: string;
+    username: string;
+    email: string;
+    // 其他用户信息字段
+  }
+  

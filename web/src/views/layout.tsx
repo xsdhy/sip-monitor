@@ -53,8 +53,8 @@ const BackendLayout = () => {
         // Fetch user info
         AppAxios.get('/user/current')
             .then(res => {
-                if (res.data.code === 2000) {
-                    setUserData(res.data.data);
+                if (res.code === 2000) {
+                    setUserData(res.data);
                 } else {
                     message.error('获取用户信息失败，请重新登录');
                     localStorage.removeItem('token');

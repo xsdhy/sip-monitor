@@ -1,8 +1,9 @@
-import { Button, Form, Input, message, Card, Typography, Spin, Row, Col } from 'antd';
+import { Button, Form, Input, message, Card, Typography, Spin, } from 'antd';
 import AppAxios from "../../utils/request";
 import { customHistory } from "../../utils/history";
 import { useState } from 'react';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import api from '@/apis/api';
 
 const { Title, Text } = Typography;
 
@@ -12,23 +13,16 @@ const Login = () => {
 
     const onFinish = (values: any) => {
         setLoading(true);
-        AppAxios.post("/login", values)
-            .then(res => {
-                if (2000 === res.data.code) {
-                    window.localStorage.setItem("token", res.data.data);
-                    message.success("登录成功");
-                    customHistory.push("/");
-                } else {
-                    message.error(res.data.msg || "登录失败");
-                }
-            })
-            .catch(err => {
-                console.error("Login error:", err);
-                message.error("登录失败，请稍后重试");
-            })
-            .finally(() => {
-                setLoading(false);
-            });
+
+        api.user.login(values).then(res => {
+            window.localStorage.setItem("token", res.data.token);
+            message.success("登录成功");
+            customHistory.push("/");
+        }).catch(err => {
+            console.error("Login error:", err);
+            message.error("登录失败，请稍后重试");
+        })
+      
     };
 
     return (

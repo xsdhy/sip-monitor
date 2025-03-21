@@ -15,11 +15,11 @@ const Profile: React.FC = () => {
   useEffect(() => {
     AppAxios.get('/user/current')
       .then(res => {
-        if (res.data.code === 2000) {
-          setUserData(res.data.data);
+        if (res.code === 2000) {
+          setUserData(res.data);
           profileForm.setFieldsValue({
-            nickname: res.data.data.nickname,
-            username: res.data.data.username,
+            nickname: res.data.nickname,
+            username: res.data.username,
           });
         } else {
           message.error('获取用户信息失败');
