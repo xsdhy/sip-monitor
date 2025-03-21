@@ -20,7 +20,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//go:embed web/build
+//go:embed web/dist
 var dist embed.FS
 
 func main() {
@@ -65,8 +65,7 @@ func main() {
 	r := gin.Default()
 
 	// 公开的API路由组
-	public := r.Group("/api")
-	public.POST("/login", authHandler.Login)
+	r.POST("/api/login", authHandler.Login)
 
 	// 需要认证的API路由组
 	authorized := r.Group("/api")
@@ -78,8 +77,7 @@ func main() {
 	authorized.POST("/user/password", authHandler.UpdatePassword)
 
 	// 记录相关API
-	authorized.GET("/record/call", handleHttp.RecordCallList)
-	authorized.GET("/record/register", handleHttp.RecordRegisterList)
+	authorized.GET("/record/call", handleHttp.CallList)
 	authorized.GET("/record/details", handleHttp.CallDetails)
 	authorized.GET("/record/raw/:id", handleHttp.RecordRaw)
 
@@ -90,8 +88,18 @@ func main() {
 	authorized.PUT("/users/:id", handleHttp.UpdateUser)
 	authorized.DELETE("/users/:id", handleHttp.DeleteUser)
 
+	// 网关管理API
+	authorized.GET("/gateways", handleHttp.GatewayList)
+	authorized.GET("/gateways/:id", handleHttp.GatewayGetByID)
+	authorized.POST("/gateways", handleHttp.GatewayCreate)
+	authorized.PUT("/gateways/:id", handleHttp.GatewayUpdate)
+	authorized.DELETE("/gateways/:id", handleHttp.GatewayDelete)
+
+	// 统计相关API
+	authorized.POST("/stat/call", handleHttp.CallStat)
+
 	//前端资源
-	r.Use(ServerStatic("web/build", dist))
+	r.Use(ServerStatic("web/dist", dist))
 
 	serverHost := fmt.Sprintf("0.0.0.0:%d", cfg.HTTPListenPort)
 	logrus.WithField("host", serverHost).Info("HttpServerInit")

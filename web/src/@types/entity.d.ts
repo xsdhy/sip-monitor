@@ -1,16 +1,24 @@
-export interface CallRecordDetailsVO {
-    code: number
-    data: CallDetailsVO
-    msg: string
-    time: string
+export interface ResponseData<T = any> {
+    code: number;
+    data: T;
+    message: string;
+    meta?: MetaVO;
 }
 
-export interface CallRecordRawVO {
-    code: number
-    data: CallRecordRaw
-    msg: string
-    time: string
+// 新增CallStatVO接口定义
+export interface CallStatVO {
+    ip: string;
+    gateway: string;
+    total: number;
+    answered: number;
+    hangup_code_0_count: number;
+    hangup_code_1xx_count: number;
+    hangup_code_2xx_count: number;
+    hangup_code_3xx_count: number;
+    hangup_code_4xx_count: number;
+    hangup_code_5xx_count: number;
 }
+
 export interface CallRecordRaw {
    id: number
    create_time: string
@@ -124,3 +132,14 @@ export interface SystemDBStatsVO {
 
 
 }
+
+// 用户相关接口类型定义
+export interface UserInfo {
+    id: number;
+    username: string;
+    nickname: string;
+    status: string;
+    create_at: string;
+    update_at: string;
+  }
+  

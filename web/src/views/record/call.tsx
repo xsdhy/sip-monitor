@@ -1,4 +1,4 @@
-import {Button, Space, Table, Tag} from 'antd'
+import {Button, Table, Tag} from 'antd'
 import {SearchForm} from '../../components/SearchFrom'
 import {CallRecordListDTO} from '../../@types/dto_list'
 import {useEffect, useState} from 'react'
@@ -8,8 +8,8 @@ import type {ColumnsType} from "antd/es/table";
 
 import dayjs from "dayjs";
 import CommonPagination from "../../components/Pagination";
-import AppAxios from "../../utils/request";
 import {OpenSeqModel} from "../../utils/tools";
+import { callApi } from '@/apis/api'
 
 function RecordCall() {
     const [calls, setCalls] = useState<SIPRecordCall[]>([])
@@ -37,7 +37,7 @@ function RecordCall() {
         {
             title: '来源',
             dataIndex: 'src_host',
-            width: 120,
+            width: 180,
             render: (_, record) => {
                 return <div>{record.src_addr}<br/>{record.dst_addr}</div>
             },
@@ -45,7 +45,7 @@ function RecordCall() {
         {
             title: '创建结束',
             key: 'create_time',
-            width: 180,
+            width: 220,
             render: (_, record) => {
                 return <div>
                     {record.create_time ? "创建:"+dayjs(record.create_time).format('YYYY-MM-DD HH:mm:ss') : ""}
@@ -57,7 +57,7 @@ function RecordCall() {
         {
             title: '振铃应答',
             key: 'ringing_time',
-            width: 180,
+            width: 220,
             render: (_, record) => {
                 return <div>
                     {record.ringing_time ? "振铃:"+dayjs(record.ringing_time).format('YYYY-MM-DD HH:mm:ss') : ""}
@@ -69,7 +69,7 @@ function RecordCall() {
         {
             title: '通话时长',
             key: 'duration',
-            width: 240,
+            width: 260,
             render: (_, record) => {
                 return <div><Tag color="blue">总时长:{record.call_duration}s</Tag>  <Tag color="default">振铃:{record.ringing_duration}s</Tag>  <Tag color="green">通话:{record.talk_duration}s</Tag></div>
             },
@@ -79,13 +79,13 @@ function RecordCall() {
             dataIndex: 'hangup_code',
             key: 'hangup_code',
             render: (_, record) => {
-                return <div>{record.hangup_code}({record.hangup_cause})</div>
+                return <div>{record.hangup_code} {record.hangup_cause}</div>
             },
         },
         {
             title: 'Action',
             key: 'action',
-            width: 60,
+            width: 80,
             fixed: 'right',
             render: (_, record) => (
                 <Button type="link" onClick={() => {
@@ -106,14 +106,13 @@ function RecordCall() {
         searchDTO.page = listPage
 
         setLoading(true)
-        AppAxios.get('/record/call', {params: searchDTO})
+        callApi.getCallList(searchDTO)
             .then(res => {
-                // @ts-ignore
-                setCalls(res.data.data)
-                // @ts-ignore
-                setListTotal(res.data.meta.total)
-                // @ts-ignore
-                setListPageSize(res.data.meta.page_size)
+                setCalls(res.data)  
+                if (res.meta) {
+                    setListTotal(res.meta.total)
+                    setListPageSize(res.meta.page_size)
+                }
                 setLoading(false)
             })
             .catch()
@@ -138,7 +137,7 @@ function RecordCall() {
                            setListPage(page);
                            setLoading(true);
                        }}
-                       onShowSizeChange={(current: number, size: number) => {
+                       onShowSizeChange={( size: number) => {
                            setListPage(1);
                            setListPageSize(size);
                            setLoading(true);

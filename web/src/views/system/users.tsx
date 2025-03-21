@@ -1,37 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Input, Space, Popconfirm, message, Card, Typography, Tag } from 'antd';
-import AppAxios from '../../utils/request';
+
 import dayjs from 'dayjs';
 import { UserAddOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
-
+import { userApi } from '@/apis/api';
+import { UserInfo } from '@/@types/entity';
 const { Title } = Typography;
 
-interface User {
-  id: number;
-  username: string;
-  nickname: string;
-  create_at: string;
-  update_at: string;
-}
+
 
 const Users: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserInfo[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [confirmLoading, setConfirmLoading] = useState<boolean>(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserInfo | null>(null);
   const [form] = Form.useForm();
 
   // 获取用户列表
   const fetchUsers = () => {
     setLoading(true);
-    AppAxios.get('/users')
-      .then(response => {
-        if (response.data.code === 200) {
-          setUsers(response.data.data);
-        } else {
-          message.error(response.data.msg || '获取用户列表失败');
-        }
+   userApi.getUserList()
+      .then(res => {
+        setUsers(res.data);
       })
       .catch(error => {
         console.error('获取用户列表失败:', error);
@@ -47,7 +38,7 @@ const Users: React.FC = () => {
   }, []);
 
   // 添加/编辑用户
-  const showModal = (user?: User) => {
+  const showModal = (user?: UserInfo) => {
     form.resetFields();
     if (user) {
       setCurrentUser(user);
@@ -75,38 +66,29 @@ const Users: React.FC = () => {
         
         if (currentUser) {
           // 更新用户
-          AppAxios.put(`/users/${currentUser.id}`, values)
-            .then(response => {
-              if (response.data.code === 200) {
-                message.success('更新用户成功');
-                setVisible(false);
-                fetchUsers();
-              } else {
-                message.error(response.data.msg || '更新用户失败');
-              }
+          userApi.updateUser(values)
+            .then(() => {
+              message.success('更新用户成功');
+              setVisible(false);
+              fetchUsers();
             })
             .catch(error => {
               console.error('更新用户失败:', error);
-              message.error('更新用户失败');
             })
             .finally(() => {
               setConfirmLoading(false);
             });
         } else {
           // 创建新用户
-          AppAxios.post('/users', values)
-            .then(response => {
-              if (response.data.code === 200) {
-                message.success('创建用户成功');
-                setVisible(false);
-                fetchUsers();
-              } else {
-                message.error(response.data.msg || '创建用户失败');
-              }
+          userApi.createUser(values)
+            .then(() => {
+              message.success('创建用户成功');
+              setVisible(false);
+              fetchUsers();
             })
             .catch(error => {
               console.error('创建用户失败:', error);
-              message.error('创建用户失败');
+
             })
             .finally(() => {
               setConfirmLoading(false);
@@ -120,14 +102,10 @@ const Users: React.FC = () => {
 
   // 删除用户
   const handleDelete = (id: number) => {
-    AppAxios.delete(`/users/${id}`)
-      .then(response => {
-        if (response.data.code === 200) {
-          message.success('删除用户成功');
-          fetchUsers();
-        } else {
-          message.error(response.data.msg || '删除用户失败');
-        }
+    userApi.deleteUser(id.toString())
+      .then(() => {
+        message.success('删除用户成功');
+        fetchUsers();
       })
       .catch(error => {
         console.error('删除用户失败:', error);
@@ -170,7 +148,7 @@ const Users: React.FC = () => {
       title: '操作',
       key: 'action',
       width: 160,
-      render: (_: any, record: User) => (
+      render: (_: any, record: UserInfo) => (
         <Space size="middle">
           <Button 
             type="link" 

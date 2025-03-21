@@ -1,29 +1,7 @@
 import {CallRecordEntity} from '../../@types/entity'
 import dayjs from "dayjs";
 
-export function getProtocolName(num: number):string {
-    if (num === 6) {return 'TCP'}
-    if (num === 17) {return 'UDP'}
-    if (num === 22) {return 'TLS'}
-    if (num === 50) {return 'ESP'}
-    return 'Unknown'
-}
 
-export function stringToColor(str: string) {
-    let hash = 0
-    for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash)
-    }
-
-    let color = '#'
-
-    for (let i = 0; i < 3; i++) {
-        const value = (hash >> (i * 8)) & 0xff
-        const v16 = '00' + value.toString(16)
-        color += v16.substring(v16.length - 2)
-    }
-    return color
-}
 
 const regEx = /\d+/
 export function isRequest(method: string) {

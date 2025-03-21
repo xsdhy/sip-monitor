@@ -1,6 +1,6 @@
 import SequenceDiagram from "../views/details/SequenceDiagram";
 import {Button, message} from "antd";
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 
 interface Prop {
     callID: string
@@ -9,9 +9,6 @@ interface Prop {
 
 export function SequenceModel(p: Prop) {
     const containerRef = useRef<HTMLDivElement>(null);
-
-
-
 
     const copyToClipboardAlternative = async () => {
         try {

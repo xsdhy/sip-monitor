@@ -14,7 +14,7 @@ import (
 type SaveService struct {
 	logger          *logrus.Logger
 	repository      model.Repository
-	callRecordCache map[string]*entity.SIPRecordCall
+	callRecordCache map[string]*entity.Call
 	cacheMutex      sync.RWMutex
 	SaveToDBQueue   chan entity.SIP
 }
@@ -23,7 +23,7 @@ func NewSaveService(logger *logrus.Logger, repository model.Repository) *SaveSer
 	s := &SaveService{
 		logger:          logger,
 		repository:      repository,
-		callRecordCache: make(map[string]*entity.SIPRecordCall),
+		callRecordCache: make(map[string]*entity.Call),
 		cacheMutex:      sync.RWMutex{},
 		SaveToDBQueue:   make(chan entity.SIP, 20000),
 	}
@@ -56,9 +56,15 @@ func (s *SaveService) FlushCacheToDB() {
 
 	// 遍历缓存中的记录
 	for callID, record := range s.callRecordCache {
+		timeoutDuration := 1 * time.Minute
+		if record.CallStatus == 2 {
+			// 通话已建立，15分钟未结束，则认为通话已结束，其他情况为1分钟超时
+			timeoutDuration = 15 * time.Minute
+		}
+
 		// 检查记录是否已完成或超过一定时间未更新
 		if record.EndTime != nil ||
-			(record.CreateTime != nil && now.Sub(*record.CreateTime) > 15*time.Minute) {
+			(record.CreateTime != nil && now.Sub(*record.CreateTime) > timeoutDuration) {
 			// 将记录保存到数据库
 			ctx := context.Background()
 
@@ -76,7 +82,7 @@ func (s *SaveService) FlushCacheToDB() {
 			}
 
 			// 使用内部函数进行更新，便于测试
-			err := s.repository.CreateSIPCallRecord(ctx, record)
+			err := s.repository.CreateCall(ctx, record)
 			if err != nil {
 				logrus.WithError(err).Error("更新SIP呼叫记录失败")
 			} else {
@@ -98,7 +104,6 @@ func (s *SaveService) SaveToDBRunner() {
 	}
 }
 
-// 优化的Save方法，减少数据库操作
 func (s *SaveService) SaveOptimized(item entity.SIP) {
 	// 忽略注册和通知消息
 	if item.CSeqMethod == "REGISTER" || item.CSeqMethod == "NOTIFY" {
@@ -158,7 +163,7 @@ func (s *SaveService) updateCallRecordInCache(item entity.SIP) {
 	if !exists {
 		// 对于新记录，只有INVITE方法才会创建
 		if item.Title == "INVITE" && item.CSeqMethod == "INVITE" {
-			record = &entity.SIPRecordCall{
+			record = &entity.Call{
 				NodeIP:    item.NodeIP,
 				SIPCallID: item.CallID,
 				SessionID: item.SessionID,
@@ -188,21 +193,25 @@ func (s *SaveService) updateCallRecordInCache(item entity.SIP) {
 			if record.RingingTime == nil {
 				ringingTime := item.CreateTime
 				record.RingingTime = &ringingTime
+				record.CallStatus = 1
 			}
 		case "200": // OK
 			if (item.CSeqMethod == "ACK" || item.CSeqMethod == "INVITE") && record.AnswerTime == nil {
 				answerTime := item.CreateTime
 				record.AnswerTime = &answerTime
+				record.CallStatus = 2
 			} else if item.CSeqMethod == "BYE" && record.EndTime == nil {
 				endTime := item.CreateTime
 				record.EndTime = &endTime
+				record.CallStatus = 3
 				record.HangupCode = 200
 				record.HangupCause = "Normal Clearing"
 			}
-		case "CANCEL", "480", "487", "500", "503", "504", "404", "403", "408", "413", "416", "486", "488", "513", "580": // Error or Cancel
+		case "CANCEL", "480", "487", "404", "403", "408", "413", "416", "486", "488", "513", "500", "503", "504", "580": // Error or Cancel
 			if record.EndTime == nil {
 				endTime := item.CreateTime
 				record.EndTime = &endTime
+				record.CallStatus = 3
 				// 设置挂断原因
 				if record.HangupCode == 0 {
 					record.HangupCode = item.ResponseCode
@@ -232,7 +241,7 @@ func (s *SaveService) updateCallRecordInCache(item entity.SIP) {
 			}
 		}
 
-		err := s.repository.CreateSIPCallRecord(ctx, record)
+		err := s.repository.CreateCall(ctx, record)
 		if err != nil {
 			logrus.WithError(err).Error("更新SIP呼叫记录失败")
 		} else {
@@ -240,15 +249,4 @@ func (s *SaveService) updateCallRecordInCache(item entity.SIP) {
 			delete(s.callRecordCache, callID)
 		}
 	}
-}
-
-// 查询缓存中的呼叫记录列表和总数
-func (s *SaveService) GetCallRecordList() ([]*entity.SIPRecordCall, int) {
-	s.cacheMutex.RLock()
-	defer s.cacheMutex.RUnlock()
-	records := make([]*entity.SIPRecordCall, 0)
-	for _, record := range s.callRecordCache {
-		records = append(records, record)
-	}
-	return records, len(s.callRecordCache)
 }

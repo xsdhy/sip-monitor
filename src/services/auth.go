@@ -2,16 +2,12 @@ package services
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"sip-monitor/src/entity"
 	"sip-monitor/src/model"
-	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -26,10 +22,9 @@ var (
 
 // JWTClaims represents the JWT token claims
 type JWTClaims struct {
-	UserID    int64  `json:"user_id"`
-	Username  string `json:"username"`
-	ExpiresAt int64  `json:"exp"`
-	IssuedAt  int64  `json:"iat"`
+	UserID   int64  `json:"user_id"`
+	Username string `json:"username"`
+	jwt.RegisteredClaims
 }
 
 // AuthService provides authentication functionality
@@ -78,40 +73,22 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (str
 
 // ValidateToken validates the provided token and returns the claims
 func (s *AuthService) ValidateToken(tokenString string) (*JWTClaims, error) {
-	parts := strings.Split(tokenString, ".")
-	if len(parts) != 2 {
-		return nil, ErrInvalidToken
-	}
+	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return s.jwtSecret, nil
+	})
 
-	// Extract payload
-	payload, err := base64.RawURLEncoding.DecodeString(parts[0])
 	if err != nil {
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return nil, ErrExpiredToken
+		}
 		return nil, ErrInvalidToken
 	}
 
-	// Validate signature
-	expectedSignature := s.generateSignature(parts[0])
-	actualSignature, err := base64.RawURLEncoding.DecodeString(parts[1])
-	if err != nil {
-		return nil, ErrInvalidToken
+	if claims, ok := token.Claims.(*JWTClaims); ok && token.Valid {
+		return claims, nil
 	}
 
-	if !hmac.Equal(expectedSignature, actualSignature) {
-		return nil, ErrInvalidToken
-	}
-
-	// Parse claims
-	var claims JWTClaims
-	if err := json.Unmarshal(payload, &claims); err != nil {
-		return nil, ErrInvalidToken
-	}
-
-	// Check expiration
-	if claims.ExpiresAt < time.Now().Unix() {
-		return nil, ErrExpiredToken
-	}
-
-	return &claims, nil
+	return nil, ErrInvalidToken
 }
 
 // GetUserByID retrieves a user by ID
@@ -133,41 +110,21 @@ func (s *AuthService) GetUserByID(ctx context.Context, id int64) (*entity.User, 
 
 // generateToken creates a new token for the given user
 func (s *AuthService) generateToken(user *entity.User) (string, error) {
-	expirationTime := time.Now().Add(s.jwtExpiry)
+	now := time.Now()
+	expirationTime := now.Add(s.jwtExpiry)
 
 	claims := &JWTClaims{
-		UserID:    user.ID,
-		Username:  user.Username,
-		ExpiresAt: expirationTime.Unix(),
-		IssuedAt:  time.Now().Unix(),
+		UserID:   user.ID,
+		Username: user.Username,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+			IssuedAt:  jwt.NewNumericDate(now),
+			NotBefore: jwt.NewNumericDate(now),
+		},
 	}
 
-	// Create payload
-	payload, err := json.Marshal(claims)
-	if err != nil {
-		return "", err
-	}
-
-	// Encode payload
-	encodedPayload := base64.RawURLEncoding.EncodeToString(payload)
-
-	// Generate signature
-	signature := s.generateSignature(encodedPayload)
-
-	// Encode signature
-	encodedSignature := base64.RawURLEncoding.EncodeToString(signature)
-
-	// Combine parts
-	token := encodedPayload + "." + encodedSignature
-
-	return token, nil
-}
-
-// generateSignature creates an HMAC-SHA256 signature for the given payload
-func (s *AuthService) generateSignature(payload string) []byte {
-	mac := hmac.New(sha256.New, s.jwtSecret)
-	mac.Write([]byte(payload))
-	return mac.Sum(nil)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(s.jwtSecret)
 }
 
 // UpdateUserInfo updates a user's nickname

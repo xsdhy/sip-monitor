@@ -6,7 +6,10 @@ import (
 	"log"
 	"sip-monitor/src/config"
 	"sip-monitor/src/entity"
+	"sip-monitor/src/model/sql"
 	"time"
+
+	mongorepo "sip-monitor/src/model/mongo"
 
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
@@ -81,7 +84,7 @@ func (f *RepositoryFactory) createMySQLRepository(cfg *config.Config) (Repositor
 		return nil, fmt.Errorf("failed to migrate schema: %w", err)
 	}
 
-	return NewGormRepository(db), nil
+	return sql.NewGormRepository(db), nil
 }
 
 // createSQLiteRepository creates a SQLite repository
@@ -101,7 +104,7 @@ func (f *RepositoryFactory) createSQLiteRepository(cfg *config.Config) (Reposito
 		return nil, fmt.Errorf("failed to migrate schema: %w", err)
 	}
 
-	return NewGormRepository(db), nil
+	return sql.NewGormRepository(db), nil
 }
 
 // createMongoRepository creates a MongoDB repository
@@ -135,7 +138,7 @@ func (f *RepositoryFactory) createMongoRepository(cfg *config.Config) (Repositor
 	_, _ = md.Collection("call_records_register").Indexes().CreateOne(context.Background(), index)
 
 	// Create MongoDB repository
-	return NewMongoRepository(md), nil
+	return mongorepo.NewMongoRepository(md), nil
 }
 
 // createPostgresRepository creates a PostgreSQL repository
@@ -157,17 +160,16 @@ func (f *RepositoryFactory) createPostgresRepository(cfg *config.Config) (Reposi
 		return nil, fmt.Errorf("failed to migrate schema: %w", err)
 	}
 
-	return NewGormRepository(db), nil
+	return sql.NewGormRepository(db), nil
 }
 
-// openGormDB opens a GORM database connection with standardized configuration
 func (f *RepositoryFactory) openGormDB(dialector gorm.Dialector) (*gorm.DB, error) {
 	// Configure GORM logger
 	gormLogger := logger.New(
 		log.New(log.Writer(), "\r\n", log.LstdFlags),
 		logger.Config{
 			SlowThreshold:             time.Second,
-			LogLevel:                  logger.Info,
+			LogLevel:                  logger.Warn,
 			IgnoreRecordNotFoundError: true,
 			Colorful:                  false,
 		},
@@ -202,8 +204,8 @@ func (f *RepositoryFactory) migrateSchema(db *gorm.DB) error {
 	return db.AutoMigrate(
 		&entity.Record{},
 		&entity.RecordRaw{},
-		&entity.SIPRecordCall{},
-		&entity.SIPRecordRegister{},
+		&entity.Call{},
 		&entity.User{},
+		&entity.Gateway{},
 	)
 }

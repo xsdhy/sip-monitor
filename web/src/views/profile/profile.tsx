@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Form, Input, Button, Tabs, message, Spin } from 'antd';
-import AppAxios from '../../utils/request';
+import { userApi } from '@/apis/api';
+import { UserInfo } from '@/@types/entity';
 
 const { TabPane } = Tabs;
 
@@ -8,22 +9,18 @@ const Profile: React.FC = () => {
   const [profileForm] = Form.useForm();
   const [passwordForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [userData, setUserData] = useState<any>(null);
+  const [_, setUserData] = useState<UserInfo>();
   const [loadingUserData, setLoadingUserData] = useState(true);
 
   // 获取用户信息
   useEffect(() => {
-    AppAxios.get('/user/current')
+    userApi.getCurrentUser()
       .then(res => {
-        if (res.data.code === 2000) {
-          setUserData(res.data.data);
+        setUserData(res.data);
           profileForm.setFieldsValue({
-            nickname: res.data.data.nickname,
-            username: res.data.data.username,
+            nickname: res.data.nickname,
+            username: res.data.username,
           });
-        } else {
-          message.error('获取用户信息失败');
-        }
       })
       .catch(err => {
         console.error('Failed to get user info:', err);
@@ -37,23 +34,19 @@ const Profile: React.FC = () => {
   // 更新个人信息
   const handleUpdateProfile = (values: any) => {
     setLoading(true);
-    AppAxios.post('/user/update', {
-      nickname: values.nickname,
-    })
-      .then(res => {
-        if (res.data.code === 2000) {
-          message.success('个人信息更新成功');
-          // 刷新用户数据
-          return AppAxios.get('/user/current');
-        } else {
-          message.error(res.data.msg || '更新失败');
-          return Promise.reject();
-        }
+    
+      userApi.updateUser({
+        id: 0,
+        username: "",
+        status: "",
+        create_at: "",
+        update_at: "",
+        nickname: values.nickname,
       })
-      .then(res => {
-        if (res && res.data.code === 2000) {
-          setUserData(res.data.data);
-        }
+      .then(() => {
+        message.success('个人信息更新成功');
+          // 刷新用户数据
+          return userApi.getCurrentUser();
       })
       .catch(err => {
         console.error('Failed to update profile:', err);
@@ -66,17 +59,13 @@ const Profile: React.FC = () => {
   // 更新密码
   const handleUpdatePassword = (values: any) => {
     setLoading(true);
-    AppAxios.post('/user/password', {
+    userApi.updatePassword({
       old_password: values.oldPassword,
       new_password: values.newPassword,
     })
-      .then(res => {
-        if (res.data.code === 2000) {
-          message.success('密码更新成功');
+      .then(() => {
+        message.success('密码更新成功');
           passwordForm.resetFields();
-        } else {
-          message.error(res.data.msg || '更新密码失败');
-        }
       })
       .catch(err => {
         console.error('Failed to update password:', err);

@@ -36,3 +36,8 @@ type AuthLogin struct {
 	Username string `json:"username" form:"username"`
 	Password string `json:"password" form:"password"`
 }
+
+type CallStatDTO struct {
+	BeginTime *time.Time `json:"begin_time" form:"begin_time" time_format:"2006-01-02 15:04:05"`
+	EndTime   *time.Time `json:"end_time" form:"end_time" time_format:"2006-01-02 15:04:05"`
+}

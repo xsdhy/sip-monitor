@@ -1,24 +1,23 @@
-import {ConfigProvider, Layout, Menu, theme, Dropdown, Button, message, Avatar, Badge} from 'antd';
-import React, {useState, useEffect} from 'react';
+import {ConfigProvider, Layout, Menu, theme, Dropdown, Button, message, Avatar} from 'antd';
+import  {useState, useEffect} from 'react';
 import {Route, Routes, useLocation, useNavigate} from "react-router-dom";
-import { UserOutlined, LogoutOutlined, AppstoreOutlined, PhoneOutlined, DatabaseOutlined, TeamOutlined, HomeOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, PhoneOutlined, DatabaseOutlined, TeamOutlined, HomeOutlined, ApiOutlined } from '@ant-design/icons';
 
 //设置本地语言
 import zhCN from 'antd/es/locale/zh_CN';
-import AppAxios from '../utils/request';
 import { customHistory } from '../utils/history';
 
 import Home from "./home/home";
-
-import RecordRegister from "./record/register";
+import GatewayList from "./gateway";
 import RecordCall from "./record/call";
 
-import SystemStats from "./system/db";
+import SystemDB from "./system/db";
 import Profile from "./profile/profile";
 import Users from "./system/users";
 
 import dayjs from 'dayjs';
 import dayjsLocal from 'dayjs/locale/zh-cn';
+import { userApi } from '@/apis/api';
 dayjs.locale(dayjsLocal)
 
 
@@ -26,9 +25,9 @@ const {Header, Content, Footer, Sider} = Layout;
 
 const items = [
     {label: '首页', key: 'home', icon: <HomeOutlined /> },
-    {label: '注册', key: 'record/register', icon: <AppstoreOutlined /> },
     {label: '呼叫', key: 'record/call', icon: <PhoneOutlined /> },
-    {label: '数据', key: 'system/stats', icon: <DatabaseOutlined /> },
+    {label: '网关', key: 'gateway', icon: <ApiOutlined /> },
+    {label: '数据', key: 'system/db', icon: <DatabaseOutlined /> },
     {label: '用户', key: 'system/users', icon: <TeamOutlined /> },
 ];
 
@@ -51,10 +50,10 @@ const BackendLayout = () => {
         }
 
         // Fetch user info
-        AppAxios.get('/user/current')
+        userApi.getCurrentUser()
             .then(res => {
-                if (res.data.code === 2000) {
-                    setUserData(res.data.data);
+                if (res.code === 2000) {
+                    setUserData(res.data);
                 } else {
                     message.error('获取用户信息失败，请重新登录');
                     localStorage.removeItem('token');
@@ -110,7 +109,7 @@ const BackendLayout = () => {
     return (
         <ConfigProvider
             theme={{
-                algorithm: [ theme.compactAlgorithm],
+                // algorithm: [ theme.compactAlgorithm],
                 token: {
                     "wireframe": false,
                     "borderRadius": 4,
@@ -190,9 +189,9 @@ const BackendLayout = () => {
                         }}>
                             <Routes>
                                 <Route path="home" element={<Home/>}/>
-                                <Route path="record/register" element={<RecordRegister/>}/>
                                 <Route path="record/call" element={<RecordCall/>}/>
-                                <Route path="system/stats" element={<SystemStats/>}/>
+                                <Route path="gateway" element={<GatewayList/>}/>
+                                <Route path="system/db" element={<SystemDB/>}/>
                                 <Route path="system/users" element={<Users/>}/>
                                 <Route path="profile" element={<Profile/>}/>
                                 <Route path="/" element={<Home/>}/>
@@ -205,7 +204,7 @@ const BackendLayout = () => {
                         color: 'rgba(0, 0, 0, 0.45)',
                         fontSize: '14px'
                     }}>
-                        SIP监控平台 © {new Date().getFullYear()} 
+                        <a href="https://github.com/xsdhy/sip-monitor" target="_blank" rel="noopener noreferrer">SIP Monitor</a> © {new Date().getFullYear()}
                     </Footer>
                 </Layout>
             </Layout>

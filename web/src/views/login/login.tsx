@@ -1,8 +1,8 @@
-import { Button, Form, Input, message, Card, Typography, Spin, Row, Col } from 'antd';
-import AppAxios from "../../utils/request";
+import { Button, Form, Input, message, Card, Typography, Spin, } from 'antd';
 import { customHistory } from "../../utils/history";
 import { useState } from 'react';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import api from '@/apis/api';
 
 const { Title, Text } = Typography;
 
@@ -12,23 +12,15 @@ const Login = () => {
 
     const onFinish = (values: any) => {
         setLoading(true);
-        AppAxios.post("/login", values)
-            .then(res => {
-                if (2000 === res.data.code) {
-                    window.localStorage.setItem("token", res.data.data);
-                    message.success("登录成功");
-                    customHistory.push("/");
-                } else {
-                    message.error(res.data.msg || "登录失败");
-                }
-            })
-            .catch(err => {
-                console.error("Login error:", err);
-                message.error("登录失败，请稍后重试");
-            })
-            .finally(() => {
-                setLoading(false);
-            });
+
+        api.user.login(values).then(res => {
+            window.localStorage.setItem("token", res.data);
+            message.success("Login successful");
+            customHistory.push("/");
+        }).catch(err => {
+            console.error("Login error:", err);
+            message.error("Login failed, please try again later");
+        })
     };
 
     return (
@@ -64,7 +56,7 @@ const Login = () => {
                     right: '100px'
                 }}
             />
-            <div style={{ display: 'flex',width: '30%', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+            <div style={{ display: 'flex',width: '80%',maxWidth: '400px', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                     <Card
                         style={{
                             width: '100%',
@@ -73,8 +65,8 @@ const Login = () => {
                         }}
                     >
                         <div style={{ textAlign: "center", marginBottom: 24 }}>
-                            <Title level={2} style={{ color: '#1677ff', marginBottom: 8 }}>SIP监控系统</Title>
-                            <Text type="secondary">登录以访问系统</Text>
+                            <Title level={2} style={{ color: '#1677ff', marginBottom: 8 }}>SIP Monitor</Title>
+                            <Text type="secondary">Login to access the system</Text>
                         </div>
 
                         <Spin spinning={loading}>
@@ -86,20 +78,20 @@ const Login = () => {
                             >
                                 <Form.Item
                                     name="username"
-                                    rules={[{ required: true, message: "请输入用户名" }]}
+                                    rules={[{ required: true, message: "Please enter your username" }]}
                                 >
                                     <Input 
                                         prefix={<UserOutlined style={{ color: 'rgba(0,0,0,.25)' }} />} 
-                                        placeholder="用户名" 
+                                        placeholder="Username" 
                                     />
                                 </Form.Item>
                                 <Form.Item
                                     name="password"
-                                    rules={[{ required: true, message: "请输入密码" }]}
+                                    rules={[{ required: true, message: "Please enter your password" }]}
                                 >
                                     <Input.Password 
                                         prefix={<LockOutlined style={{ color: 'rgba(0,0,0,.25)' }} />} 
-                                        placeholder="密码" 
+                                        placeholder="Password" 
                                     />
                                 </Form.Item>
                                 <Form.Item>
@@ -109,7 +101,7 @@ const Login = () => {
                                         loading={loading} 
                                         style={{ width: '100%', height: '40px' }}
                                     >
-                                        登录
+                                        Login
                                     </Button>
                                 </Form.Item>
                             </Form>
