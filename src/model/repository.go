@@ -42,4 +42,7 @@ type Repository interface {
 
 	// Create default admin user
 	CreateDefaultAdminUser(ctx context.Context) error
+
+
+	
 }

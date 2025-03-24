@@ -37,7 +37,7 @@ function RecordCall() {
         {
             title: '来源',
             dataIndex: 'src_host',
-            width: 120,
+            width: 140,
             render: (_, record) => {
                 return <div>{record.src_addr}<br/>{record.dst_addr}</div>
             },

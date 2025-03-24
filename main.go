@@ -65,8 +65,7 @@ func main() {
 	r := gin.Default()
 
 	// 公开的API路由组
-	public := r.Group("/api")
-	public.POST("/login", authHandler.Login)
+	r.POST("/api/login", authHandler.Login)
 
 	// 需要认证的API路由组
 	authorized := r.Group("/api")

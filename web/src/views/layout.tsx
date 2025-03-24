@@ -205,7 +205,7 @@ const BackendLayout = () => {
                         color: 'rgba(0, 0, 0, 0.45)',
                         fontSize: '14px'
                     }}>
-                        SIP监控平台 © {new Date().getFullYear()} 
+                        <a href="https://github.com/xsdhy/sip-monitor" target="_blank" rel="noopener noreferrer">SIP Monitor</a> © {new Date().getFullYear()}
                     </Footer>
                 </Layout>
             </Layout>

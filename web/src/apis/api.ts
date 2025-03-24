@@ -14,8 +14,8 @@ export const userApi = {
   /**
    * 用户登录
    */
-  login(data: { username: string; password: string }): Promise<ResponseData<{ token: string }>> {
-    return AppAxios.post<{ token: string }>("/user/login", data);
+  login(data: { username: string; password: string }): Promise<ResponseData<string>> {
+    return AppAxios.post<string>("/login", data);
   },
   
 
