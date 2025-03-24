@@ -134,9 +134,11 @@ export interface SystemDBStatsVO {
 
 // 用户相关接口类型定义
 export interface UserInfo {
-    id: string;
+    id: number;
     username: string;
-    email: string;
-    // 其他用户信息字段
+    nickname: string;
+    status: string;
+    create_at: string;
+    update_at: string;
   }
   

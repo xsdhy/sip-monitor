@@ -22,36 +22,45 @@ export const userApi = {
    * 获取用户列表
    */
   getUserList(params?: { page: number; page_size: number }): Promise<ResponseData<UserInfo[]>> {
-    return AppAxios.get<UserInfo[]>("/user/list", params);
+    return AppAxios.get<UserInfo[]>("/users", params);
   },
 
   /**
    * 获取用户详情
    */
   getUserDetail(id: string): Promise<ResponseData<UserInfo>> {
-    return AppAxios.get<UserInfo>(`/user/detail/${id}`);
+    return AppAxios.get<UserInfo>(`/users/${id}`);
   },
 
   /**
    * 创建用户
    */
   createUser(data: UserInfo): Promise<ResponseData<UserInfo>> {
-    return AppAxios.post<UserInfo>("/user/create", data);
+    return AppAxios.post<UserInfo>("/users", data);
   },
 
   /**
    * 更新用户
    */
   updateUser(data: UserInfo): Promise<ResponseData<UserInfo>> {
-    return AppAxios.put<UserInfo>("/user/update", data);
+    return AppAxios.put<UserInfo>(`/users/${data.id}`, data);
   },
 
   /**
    * 删除用户
    */
   deleteUser(id: string): Promise<ResponseData<UserInfo>> {
-    return AppAxios.delete<UserInfo>(`/user/delete/${id}`);
+    return AppAxios.delete<UserInfo>(`/users/${id}`);
   },
+
+  /**
+   * 更新密码
+   */
+  updatePassword(data: { old_password: string; new_password: string }): Promise<ResponseData<UserInfo>> {
+    return AppAxios.put<UserInfo>("/user/password", data);
+  }
+
+
 
 };
 
@@ -68,7 +77,7 @@ export const callApi = {
    * 获取呼叫详情
    */
   getCallDetail(id: string): Promise<ResponseData<CallDetailsVO>> {
-    return AppAxios.get<CallDetailsVO>(`/record/detail/${id}`);
+    return AppAxios.get<CallDetailsVO>(`/record/details?sip_call_id=${id}`);
   },
 
 

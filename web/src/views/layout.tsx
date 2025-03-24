@@ -1,11 +1,10 @@
 import {ConfigProvider, Layout, Menu, theme, Dropdown, Button, message, Avatar} from 'antd';
 import  {useState, useEffect} from 'react';
 import {Route, Routes, useLocation, useNavigate} from "react-router-dom";
-import { UserOutlined, LogoutOutlined, AppstoreOutlined, PhoneOutlined, DatabaseOutlined, TeamOutlined, HomeOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, PhoneOutlined, DatabaseOutlined, TeamOutlined, HomeOutlined } from '@ant-design/icons';
 
 //设置本地语言
 import zhCN from 'antd/es/locale/zh_CN';
-import AppAxios from '../utils/request';
 import { customHistory } from '../utils/history';
 
 import Home from "./home/home";

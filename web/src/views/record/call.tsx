@@ -8,7 +8,6 @@ import type {ColumnsType} from "antd/es/table";
 
 import dayjs from "dayjs";
 import CommonPagination from "../../components/Pagination";
-import AppAxios from "../../utils/request";
 import {OpenSeqModel} from "../../utils/tools";
 import { callApi } from '@/apis/api'
 
@@ -138,7 +137,7 @@ function RecordCall() {
                            setListPage(page);
                            setLoading(true);
                        }}
-                       onShowSizeChange={(current: number, size: number) => {
+                       onShowSizeChange={( size: number) => {
                            setListPage(1);
                            setListPageSize(size);
                            setLoading(true);

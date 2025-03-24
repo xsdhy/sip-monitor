@@ -4,12 +4,11 @@ import { Spin, Modal, Empty, Tabs } from "antd";
 import mermaid from "mermaid";
 import { createSeqHtml } from "./util";
 import {
-  CallRecordDetailsVO,
   CallRecordEntity,
   CallRecordRaw,
-  CallRecordRawVO,
+
 } from "../../@types/entity";
-import AppAxios from "../../utils/request";
+import { callApi } from "@/apis/api";
 
 interface Prop {
   callID?: string;
@@ -131,7 +130,7 @@ export default function SequenceDiagram(p: Prop) {
       if (textElement) {
         const messageText = textElement.textContent || "";
         // 在序列中查找对应的消息
-        const messageIndex = data.findIndex((item, index) => {
+        const messageIndex = data.findIndex((item) => {
           const expectedText = `${item.method} `;
           if (item.method === "INVITE") {
             return messageText.includes(
@@ -142,9 +141,7 @@ export default function SequenceDiagram(p: Prop) {
         });
 
         // 根据item.id 获取record_raw
-        AppAxios.get<CallRecordRawVO>(
-          `/record/raw/` + data[messageIndex].id
-        ).then((res) => {
+        callApi.getCallRecordRaw(data[messageIndex].id.toString()).then((res) => {
           setRecordItem(res.data);
           setRecordItemModelShow(true);
         });
@@ -156,9 +153,7 @@ export default function SequenceDiagram(p: Prop) {
     const searchParams = new URLSearchParams(window.location.search);
     const sipCallId = p.callID || searchParams.get("sip_call_id") || "";
 
-    AppAxios.get<CallRecordDetailsVO>(
-      `/record/details?sip_call_id=` + sipCallId
-    ).then((res) => {
+    callApi.getCallDetail(sipCallId).then((res) => {
       if (res.data.records.length > 0) {
         setRecords(res.data.records);
       }

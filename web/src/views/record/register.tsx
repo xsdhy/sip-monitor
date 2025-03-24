@@ -121,7 +121,7 @@ function RecordRegister() {
                            setListPage(page);
                            setLoading(true);
                        }}
-                       onShowSizeChange={(current: number, size: number) => {
+                       onShowSizeChange={( size: number) => {
                            setListPage(1);
                            setListPageSize(size);
                            setLoading(true);
