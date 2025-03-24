@@ -10,6 +10,7 @@ import dayjs from "dayjs";
 import CommonPagination from "../../components/Pagination";
 import AppAxios from "../../utils/request";
 import {OpenSeqModel} from "../../utils/tools";
+import { callApi } from '@/apis/api'
 
 function RecordCall() {
     const [calls, setCalls] = useState<SIPRecordCall[]>([])
@@ -106,14 +107,13 @@ function RecordCall() {
         searchDTO.page = listPage
 
         setLoading(true)
-        AppAxios.get('/record/call', {params: searchDTO})
+        callApi.getCallList({page: listPage, page_size: listPageSize})
             .then(res => {
-                // @ts-ignore
-                setCalls(res.data)
-                // @ts-ignore
-                setListTotal(res.meta.total)
-                // @ts-ignore
-                setListPageSize(res.meta.page_size)
+                setCalls(res.data)  
+                if (res.meta) {
+                    setListTotal(res.meta.total)
+                    setListPageSize(res.meta.page_size)
+                }
                 setLoading(false)
             })
             .catch()

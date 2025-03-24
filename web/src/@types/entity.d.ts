@@ -5,9 +5,18 @@ export interface ResponseData<T = any> {
     meta?: MetaVO;
 }
 
-
-
-
+// 新增CallStatVO接口定义
+export interface CallStatVO {
+    ip: string;
+    total: number;
+    answered: number;
+    hangup_code_0_count: number;
+    hangup_code_1xx_count: number;
+    hangup_code_2xx_count: number;
+    hangup_code_3xx_count: number;
+    hangup_code_4xx_count: number;
+    hangup_code_5xx_count: number;
+}
 
 export interface CallRecordRaw {
    id: number

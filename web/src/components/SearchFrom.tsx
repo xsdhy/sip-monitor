@@ -1,6 +1,6 @@
 import {Button, Form, Input, DatePicker, Space, Row, Col, Divider} from 'antd'
 import {CallRecordListDTO} from '../@types/dto_list'
-import React, { useState } from "react";
+import { useState } from "react";
 import {RangeValueType, ValueDate} from "../@types/base.t";
 import dayjs, {Dayjs} from "dayjs";
 import { SearchOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
@@ -19,7 +19,7 @@ const TimePresets: ValueDate<RangeValueType<Dayjs>>[] = [
     {label: '本月', value: [dayjs().startOf('month'), dayjs().endOf('month')]},
 ]
 
-const SelectConvOptions=[{ value: 'eq', label: '等于' },{ value: 'neq', label: '不等于' }]
+
 
 interface Prop {
     search: (ft: CallRecordListDTO) => void

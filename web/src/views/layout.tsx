@@ -18,6 +18,7 @@ import Users from "./system/users";
 
 import dayjs from 'dayjs';
 import dayjsLocal from 'dayjs/locale/zh-cn';
+import { userApi } from '@/apis/api';
 dayjs.locale(dayjsLocal)
 
 
@@ -49,7 +50,7 @@ const BackendLayout = () => {
         }
 
         // Fetch user info
-        AppAxios.get('/user/current')
+        userApi.getCurrentUser()
             .then(res => {
                 if (res.code === 2000) {
                     setUserData(res.data);

@@ -89,7 +89,7 @@ func main() {
 	authorized.DELETE("/users/:id", handleHttp.DeleteUser)
 
 	// 统计相关API
-	authorized.GET("/stat/call", handleHttp.CallStat)
+	authorized.POST("/stat/call", handleHttp.CallStat)
 
 	//前端资源
 	r.Use(ServerStatic("web/build", dist))
