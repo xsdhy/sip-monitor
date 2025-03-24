@@ -202,8 +202,7 @@ func (f *RepositoryFactory) migrateSchema(db *gorm.DB) error {
 	return db.AutoMigrate(
 		&entity.Record{},
 		&entity.RecordRaw{},
-		&entity.SIPRecordCall{},
-		&entity.SIPRecordRegister{},
+		&entity.Call{},
 		&entity.User{},
 	)
 }

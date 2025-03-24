@@ -77,8 +77,7 @@ func main() {
 	authorized.POST("/user/password", authHandler.UpdatePassword)
 
 	// 记录相关API
-	authorized.GET("/record/call", handleHttp.RecordCallList)
-	authorized.GET("/record/register", handleHttp.RecordRegisterList)
+	authorized.GET("/record/call", handleHttp.CallList)
 	authorized.GET("/record/details", handleHttp.CallDetails)
 	authorized.GET("/record/raw/:id", handleHttp.RecordRaw)
 
@@ -88,6 +87,9 @@ func main() {
 	authorized.POST("/users", handleHttp.CreateUser)
 	authorized.PUT("/users/:id", handleHttp.UpdateUser)
 	authorized.DELETE("/users/:id", handleHttp.DeleteUser)
+
+	// 统计相关API
+	authorized.GET("/stat/call", handleHttp.CallStat)
 
 	//前端资源
 	r.Use(ServerStatic("web/build", dist))

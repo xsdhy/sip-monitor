@@ -14,7 +14,7 @@ import (
 type SaveService struct {
 	logger          *logrus.Logger
 	repository      model.Repository
-	callRecordCache map[string]*entity.SIPRecordCall
+	callRecordCache map[string]*entity.Call
 	cacheMutex      sync.RWMutex
 	SaveToDBQueue   chan entity.SIP
 }
@@ -23,7 +23,7 @@ func NewSaveService(logger *logrus.Logger, repository model.Repository) *SaveSer
 	s := &SaveService{
 		logger:          logger,
 		repository:      repository,
-		callRecordCache: make(map[string]*entity.SIPRecordCall),
+		callRecordCache: make(map[string]*entity.Call),
 		cacheMutex:      sync.RWMutex{},
 		SaveToDBQueue:   make(chan entity.SIP, 20000),
 	}
@@ -76,7 +76,7 @@ func (s *SaveService) FlushCacheToDB() {
 			}
 
 			// 使用内部函数进行更新，便于测试
-			err := s.repository.CreateSIPCallRecord(ctx, record)
+			err := s.repository.CreateCall(ctx, record)
 			if err != nil {
 				logrus.WithError(err).Error("更新SIP呼叫记录失败")
 			} else {
@@ -158,7 +158,7 @@ func (s *SaveService) updateCallRecordInCache(item entity.SIP) {
 	if !exists {
 		// 对于新记录，只有INVITE方法才会创建
 		if item.Title == "INVITE" && item.CSeqMethod == "INVITE" {
-			record = &entity.SIPRecordCall{
+			record = &entity.Call{
 				NodeIP:    item.NodeIP,
 				SIPCallID: item.CallID,
 				SessionID: item.SessionID,
@@ -232,7 +232,7 @@ func (s *SaveService) updateCallRecordInCache(item entity.SIP) {
 			}
 		}
 
-		err := s.repository.CreateSIPCallRecord(ctx, record)
+		err := s.repository.CreateCall(ctx, record)
 		if err != nil {
 			logrus.WithError(err).Error("更新SIP呼叫记录失败")
 		} else {
@@ -243,10 +243,10 @@ func (s *SaveService) updateCallRecordInCache(item entity.SIP) {
 }
 
 // 查询缓存中的呼叫记录列表和总数
-func (s *SaveService) GetCallRecordList() ([]*entity.SIPRecordCall, int) {
+func (s *SaveService) GetCallRecordList() ([]*entity.Call, int) {
 	s.cacheMutex.RLock()
 	defer s.cacheMutex.RUnlock()
-	records := make([]*entity.SIPRecordCall, 0)
+	records := make([]*entity.Call, 0)
 	for _, record := range s.callRecordCache {
 		records = append(records, record)
 	}

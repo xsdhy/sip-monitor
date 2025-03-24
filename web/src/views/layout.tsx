@@ -1,5 +1,5 @@
-import {ConfigProvider, Layout, Menu, theme, Dropdown, Button, message, Avatar, Badge} from 'antd';
-import React, {useState, useEffect} from 'react';
+import {ConfigProvider, Layout, Menu, theme, Dropdown, Button, message, Avatar} from 'antd';
+import  {useState, useEffect} from 'react';
 import {Route, Routes, useLocation, useNavigate} from "react-router-dom";
 import { UserOutlined, LogoutOutlined, AppstoreOutlined, PhoneOutlined, DatabaseOutlined, TeamOutlined, HomeOutlined } from '@ant-design/icons';
 
@@ -10,10 +10,9 @@ import { customHistory } from '../utils/history';
 
 import Home from "./home/home";
 
-import RecordRegister from "./record/register";
 import RecordCall from "./record/call";
 
-import SystemStats from "./system/db";
+import SystemDB from "./system/db";
 import Profile from "./profile/profile";
 import Users from "./system/users";
 
@@ -26,9 +25,8 @@ const {Header, Content, Footer, Sider} = Layout;
 
 const items = [
     {label: '首页', key: 'home', icon: <HomeOutlined /> },
-    {label: '注册', key: 'record/register', icon: <AppstoreOutlined /> },
     {label: '呼叫', key: 'record/call', icon: <PhoneOutlined /> },
-    {label: '数据', key: 'system/stats', icon: <DatabaseOutlined /> },
+    {label: '数据', key: 'system/db', icon: <DatabaseOutlined /> },
     {label: '用户', key: 'system/users', icon: <TeamOutlined /> },
 ];
 
@@ -190,9 +188,8 @@ const BackendLayout = () => {
                         }}>
                             <Routes>
                                 <Route path="home" element={<Home/>}/>
-                                <Route path="record/register" element={<RecordRegister/>}/>
                                 <Route path="record/call" element={<RecordCall/>}/>
-                                <Route path="system/stats" element={<SystemStats/>}/>
+                                <Route path="system/db" element={<SystemDB/>}/>
                                 <Route path="system/users" element={<Users/>}/>
                                 <Route path="profile" element={<Profile/>}/>
                                 <Route path="/" element={<Home/>}/>

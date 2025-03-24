@@ -11,7 +11,7 @@ import {SizeConversion} from "../../utils/tools";
 import {RangePickerProps} from "antd/es/date-picker";
 
 
-function SystemStats() {
+function SystemDB() {
     const {confirm} = Modal;
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -244,4 +244,4 @@ function SystemStats() {
     )
 }
 
-export default SystemStats
+export default SystemDB

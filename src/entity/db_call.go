@@ -4,8 +4,7 @@ import (
 	"time"
 )
 
-// SIPRecordCall represents a complete call record extracted from SIP signaling
-type SIPRecordCall struct {
+type Call struct {
 	// ID field - primary key
 	ID int64 `gorm:"primaryKey;column:id;type:bigint unsigned;autoIncrement:true" bson:"_id" json:"id"`
 
@@ -46,6 +45,6 @@ type SIPRecordCall struct {
 }
 
 // TableName specifies the database table name for GORM
-func (SIPRecordCall) TableName() string {
+func (Call) TableName() string {
 	return "call_records_call"
 }
