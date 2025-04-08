@@ -46,6 +46,7 @@ const Users: React.FC = () => {
         username: user.username,
         nickname: user.nickname,
         password: '',
+        id: user.id,
       });
     } else {
       setCurrentUser(null);
@@ -63,8 +64,8 @@ const Users: React.FC = () => {
     form.validateFields()
       .then(values => {
         setConfirmLoading(true);
-        
         if (currentUser) {
+          values.id = currentUser.id
           // 更新用户
           userApi.updateUser(values)
             .then(() => {

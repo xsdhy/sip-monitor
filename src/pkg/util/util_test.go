@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestrEverseString(t *testing.T) {
+func TestReverseString(t *testing.T) {
 	successCases := []struct {
 		in       string
 		expected string

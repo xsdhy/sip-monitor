@@ -7,6 +7,7 @@ import (
 
 	"sip-monitor/src/entity"
 	"sip-monitor/src/model"
+	"sip-monitor/src/pkg/util"
 
 	"github.com/sirupsen/logrus"
 )
@@ -136,9 +137,15 @@ func (s *SaveService) SaveOptimized(item entity.SIP) {
 			return
 		}
 
+		// 清理Raw文本中的不支持字符
+		sanitizedRaw := ""
+		if item.Raw != nil {
+			sanitizedRaw = util.SanitizeRawText(*item.Raw)
+		}
+
 		err = s.repository.CreateRecordRaw(ctx, &entity.RecordRaw{
 			ID:         record.ID,
-			Raw:        *item.Raw,
+			Raw:        sanitizedRaw,
 			CreateTime: item.CreateTime,
 		})
 		if err != nil {

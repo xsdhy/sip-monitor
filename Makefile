@@ -1,4 +1,5 @@
-
+build:
+	GOOS=linux GOARCH=amd64 go build -o sip-monitor
 
 sbc:
 	GOOS=linux GOARCH=amd64 go build -o sip-monitor
