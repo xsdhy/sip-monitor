@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { DatePicker, Card, Table, Button, Row, Col, Spin, message, Statistic } from 'antd';
-import { Column } from '@ant-design/charts';
 import { callApi } from "@/apis/api";
 import { CallStatVO } from "@/@types/entity";
 import dayjs, { Dayjs } from 'dayjs';
@@ -103,48 +102,7 @@ function Home() {
         );
     };
 
-    // 转换数据为图表格式
-    const transformDataForCharts = () => {
-        const chartData: any[] = [];
-        
-        callStats.forEach(stat => {
-            chartData.push({ ip: stat.ip, type: '总通话量', value: stat.total });
-            chartData.push({ ip: stat.ip, type: '已接通', value: stat.answered });
-        });
-        
-        return chartData;
-    };
-    
-    // 柱状图配置
-    const config = {
-        data: transformDataForCharts(),
-        isGroup: true,
-        xField: 'ip',
-        yField: 'value',
-        seriesField: 'type',
-        
-        // 删除可能导致问题的label配置
-        // 设置图例位置和其他样式
-        legend: {
-            position: 'top'
-        },
-        
-        // 调整柱子样式
-        columnStyle: {
-            radius: [4, 4, 0, 0],
-        },
-        
-        // 设置颜色
-        color: ['#4377FE', '#0BA25F', '#F5B60D', '#E96A59', '#9861E5', '#4DCCCC', '#F2637B', '#B4BDFF'],
-        
-        // X轴设置
-        xAxis: {
-            label: {
-                autoHide: true,
-                autoRotate: false,
-            },
-        },
-    };
+
 
     // 表格列定义
     const columns = [
@@ -232,12 +190,7 @@ function Home() {
             <Spin spinning={loading}>
                 {statisticCard()}
 
-                <Card title="通话状态码统计" style={{ marginBottom: 16 }}>
-                    <div style={{ height: 400 }}>
-                        <Column {...config} />
-                    </div>
-                </Card>
-                
+    
 
                 <Card title="通话数据表格">
                     <Table
