@@ -219,16 +219,17 @@ func (s *SaveService) updateCallRecordInCache(item entity.SIP) {
 				endTime := item.CreateTime
 				record.EndTime = &endTime
 				record.CallStatus = 3
-				// 设置挂断原因
-				if record.HangupCode == 0 {
-					record.HangupCode = item.ResponseCode
-				}
+			}
 
-				if item.Title == "CANCEL" {
-					record.HangupCause = "Call Canceled"
-				} else {
-					record.HangupCause = item.ResponseDesc
-				}
+			// 设置挂断原因
+			if record.HangupCode == 0 {
+				record.HangupCode = item.ResponseCode
+			}
+
+			if item.Title == "CANCEL" {
+				record.HangupCause = "Call Canceled"
+			} else {
+				record.HangupCause = item.ResponseDesc
 			}
 		}
 	}
@@ -241,7 +242,11 @@ func (s *SaveService) updateCallRecordInCache(item entity.SIP) {
 		if record.CreateTime != nil {
 			record.CallDuration = int(record.EndTime.Sub(*record.CreateTime) / time.Second)
 			if record.RingingTime != nil {
-				record.RingingDuration = int(record.RingingTime.Sub(*record.CreateTime) / time.Second)
+				if record.AnswerTime != nil {
+					record.RingingDuration = int(record.AnswerTime.Sub(*record.RingingTime) / time.Second)
+				} else {
+					record.RingingDuration = int(record.EndTime.Sub(*record.RingingTime) / time.Second)
+				}
 			}
 			if record.AnswerTime != nil {
 				record.TalkDuration = int(record.EndTime.Sub(*record.AnswerTime) / time.Second)
