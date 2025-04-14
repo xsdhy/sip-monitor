@@ -221,15 +221,14 @@ func (s *SaveService) updateCallRecordInCache(item entity.SIP) {
 				record.CallStatus = 3
 			}
 
-			// 设置挂断原因
-			if record.HangupCode == 0 {
-				record.HangupCode = item.ResponseCode
-			}
-
-			if item.Title == "CANCEL" {
-				record.HangupCause = "Call Canceled"
-			} else {
-				record.HangupCause = item.ResponseDesc
+			// 只有响应的时候，才设置挂断原因
+			if item.SrcAddr == record.DstAddr {
+				if record.HangupCode == 0 {
+					record.HangupCode = item.ResponseCode
+				}
+				if record.HangupCause == "" {
+					record.HangupCause = item.ResponseDesc
+				}
 			}
 		}
 	}

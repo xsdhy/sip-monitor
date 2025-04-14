@@ -42,6 +42,7 @@ type Call struct {
 	CallStatus  int    `gorm:"column:call_status;type:int unsigned;default:0" bson:"call_status" json:"call_status"`     // Call status:0通话未建立，1通话有应答（响铃），2通话已建立（接通），3通话已结束
 	HangupCode  int    `gorm:"column:hangup_code;type:int unsigned;default:0" bson:"hangup_code" json:"hangup_code"`     // Hangup code
 	HangupCause string `gorm:"column:hangup_cause;type:varchar(120);default:''" bson:"hangup_cause" json:"hangup_cause"` // Hangup cause
+	HangupSide  string `gorm:"column:hangup_side;type:char(3);default:''" bson:"hangup_side" json:"hangup_side"`         // 挂机方:dst,src
 }
 
 // TableName specifies the database table name for GORM
