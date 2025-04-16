@@ -56,10 +56,49 @@ export interface CallRecordEntity {
     timestamp_micro: number
 }
 
+export interface RtcpReportRaw {
+    id: number
+    node_ip: string
+    sip_call_id: string
+    src_addr: string
+    dst_addr: string
+    raw: string
+    create_time: string
+}
+
+// export interface RtcpReport {
+//     id: number
+//     node_ip: string
+//     sip_call_id: string
+//     src_addr: string
+//     dst_addr: string
+//     create_time: string
+//     timestamp_micro: number
+//     aleg_mos: number
+//     aleg_packet_lost: number
+//     aleg_packet_count: number
+//     aleg_packet_lost_rate: number
+//     aleg_jitter_avg: number
+//     aleg_jitter_max: number
+//     aleg_delay_avg: number
+//     aleg_delay_max: number
+//     bleg_mos: number
+//     bleg_packet_lost: number
+//     bleg_packet_count: number
+//     bleg_packet_lost_rate: number
+//     bleg_jitter_avg: number
+//     bleg_jitter_max: number
+//     bleg_delay_avg: number
+//     bleg_delay_max: number
+// }
+
+
 
 export interface CallDetailsVO {
     records: CallRecordEntity[]
     relevants: CallRecordEntity[]
+    rtcp_packets: RtcpReportRaw[]
+    // rtcp_report: RtcpReport
 }
 
 export interface SIPRecordCall {
