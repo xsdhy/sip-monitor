@@ -1,6 +1,9 @@
 package rtcp
 
-import "time"
+import (
+	"math"
+	"time"
+)
 
 type CallRTCPReports struct {
 	CallID      string
@@ -221,4 +224,135 @@ func (s *LegRTCPReport) SummaryRTCPReport() {
 			s.Mos = 5.0
 		}
 	}
+}
+
+// calculateMOS calculates MOS score based on packet loss and jitter
+func calculateMOS(lossRate float64, jitter float64) float64 {
+	// Simplified E-model based MOS calculation
+	// MOS = 4.3 - 0.3 * ln(1 + 15 * lossRate) - 0.2 * log10(1 + jitter)
+
+	// Ensure values are within boundaries
+	if lossRate > 1.0 {
+		lossRate = 1.0
+	}
+
+	mosScore := 4.3 - 0.3*math.Log(1+15*lossRate) - 0.2*math.Log10(1+jitter)
+
+	// MOS score should be between 1.0 and 4.5
+	if mosScore < 1.0 {
+		return 1.0
+	}
+	if mosScore > 4.5 {
+		return 4.5
+	}
+
+	return mosScore
+}
+
+// convertFractionLostToRate converts RTCP fraction_lost (0-255) to rate (0.0-1.0)
+func convertFractionLostToRate(fractionLost int) float64 {
+	return float64(fractionLost) / 256.0
+}
+
+// processRTCPPackets processes RTCP packets and returns a LegRTCPReport
+func (s *LegRTCPReport) ProcessRTCPPackets() {
+	if len(s.RawPackets) == 0 {
+		return
+	}
+
+	var totalJitter uint64 = 0
+	var validJitterCount uint64 = 0
+	var totalDelay uint64 = 0
+	var validDelayCount uint64 = 0
+	var totalLossRate float64 = 0
+	var validLossRateCount int = 0
+
+	// Process each packet
+	for _, packet := range s.RawPackets {
+		// 安全检查：确保packet不为空
+		if packet == nil {
+			continue
+		}
+
+		rawData := packet
+
+		// 安全检查：确保SenderInfo不为空
+		if rawData.SenderInfo != nil {
+			// Add to total packet count
+			s.PacketCount += uint64(rawData.SenderInfo.Packets)
+		}
+
+		// 安全检查：确保ReportBlocks不为空
+		if rawData.ReportBlocks != nil {
+			// Process each report block
+			for _, block := range rawData.ReportBlocks {
+				// Handle packet loss
+				if block.FractionLost >= 0 {
+					lossRate := convertFractionLostToRate(int(block.FractionLost))
+					totalLossRate += lossRate
+					validLossRateCount++
+
+					// Add absolute packet loss only if it's not the anomalous value (16777215 likely means -1)
+					if block.PacketsLost >= 0 && block.PacketsLost < 16777000 {
+						s.PacketLost += uint64(block.PacketsLost)
+					}
+				}
+
+				// Handle jitter - 只处理正值
+				if block.IAJitter > 0 {
+					jitter := uint64(block.IAJitter)
+					totalJitter += jitter
+					validJitterCount++
+
+					if jitter > s.JitterMax {
+						s.JitterMax = jitter
+					}
+				}
+
+				// Calculate round-trip time if available - 只处理有效值
+				if block.LSR > 0 && block.DLSR > 0 {
+					// This is a simplified RTT calculation
+					delay := uint64(block.DLSR)
+					if delay > 0 { // 只处理正值
+						totalDelay += delay
+						validDelayCount++
+
+						if delay > s.DelayMax {
+							s.DelayMax = delay
+						}
+					}
+				}
+			}
+		}
+
+		// Process XR block if available
+		if rawData.ReportBlocksXR != nil && rawData.ReportBlocksXR.RoundTripDelay > 0 {
+			delay := uint64(rawData.ReportBlocksXR.RoundTripDelay)
+			totalDelay += delay
+			validDelayCount++
+
+			if delay > s.DelayMax {
+				s.DelayMax = delay
+			}
+		}
+	}
+
+	// Calculate averages - 安全地计算平均值，避免除零
+	if validJitterCount > 0 {
+		s.JitterAvg = totalJitter / validJitterCount
+	}
+
+	if validDelayCount > 0 {
+		s.DelayAvg = totalDelay / validDelayCount
+	}
+
+	if validLossRateCount > 0 {
+		s.PacketLostRate = totalLossRate / float64(validLossRateCount)
+	} else if s.PacketCount > 0 && s.PacketLost > 0 {
+		// Fallback loss rate calculation - 只有在PacketCount和PacketLost都大于0时才计算
+		s.PacketLostRate = float64(s.PacketLost) / float64(s.PacketCount)
+	}
+
+	// Calculate MOS score
+	s.Mos = calculateMOS(s.PacketLostRate, float64(s.JitterAvg))
 }

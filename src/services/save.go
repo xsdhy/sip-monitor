@@ -280,30 +280,30 @@ func (s *SaveService) dealRTCPReport(callID string) {
 		return
 	}
 
-	var rtcpReport *entity.RtcpReport
-	var rtcpReportRaws []*entity.RtcpReportRaw
+	rtcpReport := &entity.RtcpReport{}
+	rtcpReportRaws := make([]*entity.RtcpReportRaw, 0)
 
 	// 有两条或更多通信通道，设置A-leg和B-leg
 	i := 0
 	for _, leg := range report.Legs {
+		leg.ProcessRTCPPackets()
 		if i == 0 {
+			rtcpReport.NodeIP = leg.NodeIP
+			rtcpReport.SIPCallID = callID
+			rtcpReport.SrcAddr = leg.SrcAddr
+			rtcpReport.DstAddr = leg.DstAddr
+			rtcpReport.CreateTime = time.Now()
+			rtcpReport.TimestampMicro = time.Now().UnixMicro()
+
 			// 创建A-leg RTCP报告
-			rtcpReport = &entity.RtcpReport{
-				NodeIP:             leg.NodeIP,
-				SIPCallID:          callID,
-				SrcAddr:            leg.SrcAddr,
-				DstAddr:            leg.DstAddr,
-				AlegMos:            leg.Mos,
-				AlegPacketLost:     leg.PacketLost,
-				AlegPacketCount:    leg.PacketCount,
-				AlegPacketLostRate: leg.PacketLostRate,
-				AlegJitterAvg:      leg.JitterAvg,
-				AlegJitterMax:      leg.JitterMax,
-				AlegDelayAvg:       leg.DelayAvg,
-				AlegDelayMax:       leg.DelayMax,
-				CreateTime:         time.Now(),
-				TimestampMicro:     time.Now().UnixMicro(),
-			}
+			rtcpReport.AlegMos = leg.Mos
+			rtcpReport.AlegPacketLost = leg.PacketLost
+			rtcpReport.AlegPacketCount = leg.PacketCount
+			rtcpReport.AlegPacketLostRate = leg.PacketLostRate
+			rtcpReport.AlegJitterAvg = leg.JitterAvg
+			rtcpReport.AlegJitterMax = leg.JitterMax
+			rtcpReport.AlegDelayAvg = leg.DelayAvg
+			rtcpReport.AlegDelayMax = leg.DelayMax
 		} else if i == 1 {
 			rtcpReport.BlegMos = leg.Mos
 			rtcpReport.BlegPacketLost = leg.PacketLost
@@ -313,7 +313,6 @@ func (s *SaveService) dealRTCPReport(callID string) {
 			rtcpReport.BlegJitterMax = leg.JitterMax
 			rtcpReport.BlegDelayAvg = leg.DelayAvg
 			rtcpReport.BlegDelayMax = leg.DelayMax
-			break // 只处理前两个leg
 		}
 
 		for _, packet := range leg.RawPackets {
@@ -329,20 +328,22 @@ func (s *SaveService) dealRTCPReport(callID string) {
 		i++
 	}
 
-	// 保存RTCP报告到数据库
-	if rtcpReport != nil {
-		ctx := context.Background()
-		err := s.repository.CreateRtcpReport(ctx, rtcpReport)
-		if err != nil {
-			s.logger.WithError(err).Error("保存RTCP报告失败")
-		}
+	ctx := context.Background()
+	err := s.repository.CreateRtcpReport(ctx, rtcpReport)
+	if err != nil {
+		s.logger.WithFields(logrus.Fields{
+			"callID": callID,
+			"report": rtcpReport,
+		}).WithError(err).Error("保存RTCP报告失败")
 	}
 
 	if len(rtcpReportRaws) > 0 {
-		ctx := context.Background()
 		err := s.repository.CreateRtcpReportRaws(ctx, rtcpReportRaws)
 		if err != nil {
-			s.logger.WithError(err).Error("保存RTCP报告失败")
+			s.logger.WithFields(logrus.Fields{
+				"callID": callID,
+				"report": rtcpReportRaws,
+			}).WithError(err).Error("保存RTCP报告失败")
 		}
 	}
 

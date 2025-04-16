@@ -11,6 +11,7 @@
 *.sw?
 sbc
 sip-monitor
+sip-monitor-lb
 __debug_bin*
 Makefile
 sip_monitor.db
