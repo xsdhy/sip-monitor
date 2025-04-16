@@ -50,4 +50,15 @@ type Repository interface {
 	GatewayGetByName(name string) (*entity.Gateway, error)
 	// GetByAddr 根据地址获取网关
 	GatewayGetByAddr(addr string) (*entity.Gateway, error)
+
+	// RTCP Report operations
+	CreateRtcpReportRaw(ctx context.Context, record *entity.RtcpReportRaw) error
+	CreateRtcpReportRaws(ctx context.Context, records []*entity.RtcpReportRaw) error
+	GetRtcpReportRawByID(ctx context.Context, id int64) (*entity.RtcpReportRaw, error)
+	GetRtcpReportRawByBySIPCallID(ctx context.Context, sipCallID string) ([]*entity.RtcpReportRaw, error)
+	DeleteRtcpReportRaw(ctx context.Context, id int64) error
+	CreateRtcpReport(ctx context.Context, record *entity.RtcpReport) error
+	DeleteRtcpReport(ctx context.Context, id int64) error
+	GetRtcpReportByID(ctx context.Context, id int64) (*entity.RtcpReport, error)
+	GetRtcpReportBySIPCallID(ctx context.Context, sipCallID string) (*entity.RtcpReport, error)
 }

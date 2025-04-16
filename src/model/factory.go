@@ -207,5 +207,7 @@ func (f *RepositoryFactory) migrateSchema(db *gorm.DB) error {
 		&entity.Call{},
 		&entity.User{},
 		&entity.Gateway{},
+		&entity.RtcpReport{},
+		&entity.RtcpReportRaw{},
 	)
 }

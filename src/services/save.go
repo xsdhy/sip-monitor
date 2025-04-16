@@ -7,6 +7,7 @@ import (
 
 	"sip-monitor/src/entity"
 	"sip-monitor/src/model"
+	"sip-monitor/src/pkg/rtcp"
 	"sip-monitor/src/pkg/util"
 
 	"github.com/sirupsen/logrus"
@@ -18,15 +19,17 @@ type SaveService struct {
 	callRecordCache map[string]*entity.Call
 	cacheMutex      sync.RWMutex
 	SaveToDBQueue   chan entity.SIP
+	rtcpService     *rtcp.RTCPReportService
 }
 
-func NewSaveService(logger *logrus.Logger, repository model.Repository) *SaveService {
+func NewSaveService(logger *logrus.Logger, repository model.Repository, rtcpService *rtcp.RTCPReportService) *SaveService {
 	s := &SaveService{
 		logger:          logger,
 		repository:      repository,
 		callRecordCache: make(map[string]*entity.Call),
 		cacheMutex:      sync.RWMutex{},
 		SaveToDBQueue:   make(chan entity.SIP, 20000),
+		rtcpService:     rtcpService,
 	}
 	s.InitSaveToDBRunner()
 	// 启动处理队列的任务
@@ -81,6 +84,8 @@ func (s *SaveService) FlushCacheToDB() {
 					record.TalkDuration = int(record.EndTime.Sub(*record.AnswerTime) / time.Second)
 				}
 			}
+
+			go s.dealRTCPReport(callID)
 
 			// 使用内部函数进行更新，便于测试
 			err := s.repository.CreateCall(ctx, record)
@@ -251,6 +256,7 @@ func (s *SaveService) updateCallRecordInCache(item entity.SIP) {
 				record.TalkDuration = int(record.EndTime.Sub(*record.AnswerTime) / time.Second)
 			}
 		}
+		go s.dealRTCPReport(callID)
 
 		err := s.repository.CreateCall(ctx, record)
 		if err != nil {
@@ -260,4 +266,86 @@ func (s *SaveService) updateCallRecordInCache(item entity.SIP) {
 			delete(s.callRecordCache, callID)
 		}
 	}
+}
+
+// 处理RTCP报告
+func (s *SaveService) dealRTCPReport(callID string) {
+	report := s.rtcpService.GetCallRTCPReportByCallID(callID)
+	if report == nil {
+		return
+	}
+
+	countLegs := len(report.Legs)
+	if countLegs == 0 {
+		return
+	}
+
+	var rtcpReport *entity.RtcpReport
+	var rtcpReportRaws []*entity.RtcpReportRaw
+
+	// 有两条或更多通信通道，设置A-leg和B-leg
+	i := 0
+	for _, leg := range report.Legs {
+		if i == 0 {
+			// 创建A-leg RTCP报告
+			rtcpReport = &entity.RtcpReport{
+				NodeIP:             leg.NodeIP,
+				SIPCallID:          callID,
+				SrcAddr:            leg.SrcAddr,
+				DstAddr:            leg.DstAddr,
+				AlegMos:            leg.Mos,
+				AlegPacketLost:     leg.PacketLost,
+				AlegPacketCount:    leg.PacketCount,
+				AlegPacketLostRate: leg.PacketLostRate,
+				AlegJitterAvg:      leg.JitterAvg,
+				AlegJitterMax:      leg.JitterMax,
+				AlegDelayAvg:       leg.DelayAvg,
+				AlegDelayMax:       leg.DelayMax,
+				CreateTime:         time.Now(),
+				TimestampMicro:     time.Now().UnixMicro(),
+			}
+		} else if i == 1 {
+			rtcpReport.BlegMos = leg.Mos
+			rtcpReport.BlegPacketLost = leg.PacketLost
+			rtcpReport.BlegPacketCount = leg.PacketCount
+			rtcpReport.BlegPacketLostRate = leg.PacketLostRate
+			rtcpReport.BlegJitterAvg = leg.JitterAvg
+			rtcpReport.BlegJitterMax = leg.JitterMax
+			rtcpReport.BlegDelayAvg = leg.DelayAvg
+			rtcpReport.BlegDelayMax = leg.DelayMax
+			break // 只处理前两个leg
+		}
+
+		for _, packet := range leg.RawPackets {
+			rtcpReportRaws = append(rtcpReportRaws, &entity.RtcpReportRaw{
+				NodeIP:     leg.NodeIP,
+				SIPCallID:  callID,
+				SrcAddr:    leg.SrcAddr,
+				DstAddr:    leg.DstAddr,
+				Raw:        packet.Raw,
+				CreateTime: time.UnixMicro(packet.TimestampMicro),
+			})
+		}
+		i++
+	}
+
+	// 保存RTCP报告到数据库
+	if rtcpReport != nil {
+		ctx := context.Background()
+		err := s.repository.CreateRtcpReport(ctx, rtcpReport)
+		if err != nil {
+			s.logger.WithError(err).Error("保存RTCP报告失败")
+		}
+	}
+
+	if len(rtcpReportRaws) > 0 {
+		ctx := context.Background()
+		err := s.repository.CreateRtcpReportRaws(ctx, rtcpReportRaws)
+		if err != nil {
+			s.logger.WithError(err).Error("保存RTCP报告失败")
+		}
+	}
+
+	// 清理RTCP报告数据，避免内存泄漏
+	s.rtcpService.ClearCallReport(callID)
 }

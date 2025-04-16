@@ -11,6 +11,7 @@ import (
 
 	"sip-monitor/src/config"
 	"sip-monitor/src/model"
+	"sip-monitor/src/pkg/rtcp"
 
 	"strings"
 
@@ -41,11 +42,12 @@ func main() {
 	}
 	repository.CreateDefaultAdminUser(context.Background())
 
+	rtcpService := rtcp.NewRTCPReportService(logger)
 	// 初始化保存服务
-	saveService := services.NewSaveService(logger, repository)
+	saveService := services.NewSaveService(logger, repository, rtcpService)
 
 	//启动HepServer
-	hepServer, err := services.NewHepServer(logger, &cfg, saveService)
+	hepServer, err := services.NewHepServer(logger, &cfg, saveService, rtcpService)
 	if err != nil {
 		logrus.WithError(err).Error("Failed to create hep server")
 		return

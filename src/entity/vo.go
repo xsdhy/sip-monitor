@@ -26,8 +26,10 @@ type Meta struct {
 }
 
 type CallDetailsVO struct {
-	Records   []Record `json:"records"`
-	Relevants []Record `json:"relevants"`
+	Records     []Record         `json:"records"`
+	Relevants   []Record         `json:"relevants"`
+	RtcpReport  *RtcpReport      `json:"rtcp_report"`
+	RTCPPackets []*RtcpReportRaw `json:"rtcp_packets"`
 }
 
 type CallStatVO struct {

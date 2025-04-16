@@ -175,3 +175,48 @@ func (r *MongoRepository) GatewayGetByName(name string) (*entity.Gateway, error)
 func (r *MongoRepository) GatewayGetByAddr(addr string) (*entity.Gateway, error) {
 	return nil, nil
 }
+
+// RTCP Report operations
+
+func (r *MongoRepository) CreateRtcpReportRaws(ctx context.Context, records []*entity.RtcpReportRaw) error {
+	return nil
+}
+
+func (r *MongoRepository) CreateRtcpReportRaw(ctx context.Context, record *entity.RtcpReportRaw) error {
+	return nil
+}
+
+func (r *MongoRepository) GetRtcpReportRawByBySIPCallID(ctx context.Context, sipCallID string) ([]*entity.RtcpReportRaw, error) {
+	return nil, nil
+}
+
+func (r *MongoRepository) GetRtcpReportRawByID(ctx context.Context, id int64) (*entity.RtcpReportRaw, error) {
+	return nil, nil
+}
+
+func (r *MongoRepository) DeleteRtcpReportRaw(ctx context.Context, id int64) error {
+	return nil
+}
+
+func (r *MongoRepository) CreateRtcpReport(ctx context.Context, record *entity.RtcpReport) error {
+	return nil
+}
+
+func (r *MongoRepository) DeleteRtcpReport(ctx context.Context, id int64) error {
+	return nil
+}
+
+func (r *MongoRepository) GetRtcpReportByID(ctx context.Context, id int64) (*entity.RtcpReport, error) {
+	return nil, nil
+}
+
+func (r *MongoRepository) GetRtcpReportsBySIPCallIDs(ctx context.Context, sipCallIDs []string) ([]entity.RtcpReport, error) {
+	return nil, nil
+}
+func (r *MongoRepository) GetRtcpReportCallByID(ctx context.Context, id int64) (*entity.RtcpReport, error) {
+	return nil, nil
+}
+
+func (r *MongoRepository) GetRtcpReportBySIPCallID(ctx context.Context, sipCallID string) (*entity.RtcpReport, error) {
+	return nil, nil
+}

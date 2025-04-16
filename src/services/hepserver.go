@@ -9,6 +9,7 @@ import (
 	"sip-monitor/src/config"
 	"sip-monitor/src/entity"
 	"sip-monitor/src/pkg/hep"
+	"sip-monitor/src/pkg/rtcp"
 	"sip-monitor/src/pkg/siprocket"
 
 	"github.com/sirupsen/logrus"
@@ -19,9 +20,10 @@ type HepServer struct {
 	conn        *net.UDPConn
 	cfg         *config.Config
 	saveService *SaveService
+	rtcpService *rtcp.RTCPReportService
 }
 
-func NewHepServer(logger *logrus.Logger, cfg *config.Config, saveService *SaveService) (*HepServer, error) {
+func NewHepServer(logger *logrus.Logger, cfg *config.Config, saveService *SaveService, rtcpService *rtcp.RTCPReportService) (*HepServer, error) {
 	conn, err := net.ListenUDP("udp", &net.UDPAddr{Port: cfg.UDPListenPort})
 	if err != nil {
 		logger.WithError(err).Error("HepServerListener Udp Service listen report udp fail")
@@ -32,6 +34,7 @@ func NewHepServer(logger *logrus.Logger, cfg *config.Config, saveService *SaveSe
 		logger:      logger,
 		cfg:         cfg,
 		saveService: saveService,
+		rtcpService: rtcpService,
 	}, nil
 }
 
@@ -95,6 +98,11 @@ func (h *HepServer) ParseSIPMsg(b []byte, ip string) {
 	}
 
 	if len(hepMsg.Body) < h.cfg.MinPacketLength {
+		return
+	}
+
+	if hepMsg.ProtocolType == hep.ProtocolTypeRTCP {
+		h.rtcpService.ReceiveRTCPPacket(ip, hepMsg)
 		return
 	}
 

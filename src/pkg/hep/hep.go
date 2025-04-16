@@ -1,6 +1,7 @@
 /**
 * Homer Encapsulation Protocol v3
 * Courtesy of Weave Communications, Inc (http://getweave.com/) under the ISC license (https://en.wikipedia.org/wiki/ISC_license)
+* https://www.voztovoice.org/sites/default/files/hep3_rev12.pdf
 **/
 
 package hep
@@ -47,6 +48,19 @@ const (
 var protocolFamilies []string
 var vendors []string
 var protocolTypes []string
+
+const (
+	// 0x01 = SIP
+	// 0x02 = XMPP
+	// 0x03 = SDP
+	// 0x04 = RTP
+	// 0x05 = RTCP
+	ProtocolTypeSIP  = 0x01
+	ProtocolTypeXMPP = 0x02
+	ProtocolTypeSDP  = 0x03
+	ProtocolTypeRTP  = 0x04
+	ProtocolTypeRTCP = 0x05
+)
 
 func init() {
 
@@ -101,6 +115,7 @@ type HepMsg struct {
 	CaptureAgentID        uint16
 	KeepAliveTimer        uint16
 	AuthenticateKey       string
+	InternalCorrelationID string // 内部关联ID
 	Body                  []byte
 }
 
@@ -238,6 +253,7 @@ func (hepMsg *HepMsg) parseHep3(udpPacket []byte) error {
 			hepMsg.Body = append(hepMsg.Body, chunkBody...)
 		case CompressedPayload:
 		case InternalC:
+			hepMsg.InternalCorrelationID = string(chunkBody)
 		default:
 		}
 		currentByte += chunkLength

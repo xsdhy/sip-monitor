@@ -28,6 +28,7 @@ func (h *HandleHttp) CallDetails(c *gin.Context) {
 
 	vo.Records = make([]entity.Record, 0)
 	vo.Relevants = make([]entity.Record, 0)
+	vo.RTCPPackets = make([]*entity.RtcpReportRaw, 0)
 
 	vo.Records, _ = h.repository.GetRecordsBySIPCallIDs(c, []string{sipCallID})
 
@@ -42,6 +43,10 @@ func (h *HandleHttp) CallDetails(c *gin.Context) {
 		return
 	}
 	vo.Relevants, _ = h.repository.GetRecordsBySIPCallIDs(c, sipCallIDs)
+
+	vo.RtcpReport, _ = h.repository.GetRtcpReportBySIPCallID(c, sipCallID)
+
+	vo.RTCPPackets, _ = h.repository.GetRtcpReportRawByBySIPCallID(c, sipCallID)
 
 	util.SendResponse(c, nil, vo)
 }
