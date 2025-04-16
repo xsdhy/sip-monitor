@@ -7,6 +7,7 @@ import { createSeqHtml } from "./util";
 import {
   CallRecordEntity,
   CallRecordRaw,
+  RtcpReport,
   RtcpReportRaw
 } from "../../@types/entity";
 import { callApi } from "@/apis/api";
@@ -21,10 +22,11 @@ export default function SequenceDiagram(p: Prop) {
   const recordsRef = useRef<HTMLDivElement>(null);
   const relevantsRef = useRef<HTMLDivElement>(null);
   const rtcpRef = useRef<HTMLDivElement>(null);
-
+  const rtcpReportRef = useRef<HTMLDivElement>(null);
   const [records, setRecords] = useState<CallRecordEntity[]>([]);
   const [relevants, setRelevants] = useState<CallRecordEntity[]>([]);
   const [rtcpPackets, setRtcpPackets] = useState<RtcpReportRaw[]>([]);
+  const [rtcpReport, setRtcpReport] = useState<RtcpReport>();
   const [activeTabKey, setActiveTabKey] = useState<string>("records");
 
   //消息详情弹窗
@@ -34,6 +36,11 @@ export default function SequenceDiagram(p: Prop) {
   //RTCP详情弹窗
   const [rtcpItem, setRtcpItem] = useState<RtcpReportRaw>();
   const [rtcpItemModalShow, setRtcpItemModalShow] = useState(false);
+
+  //RTCP报告弹窗
+  const [rtcpReportItem, setRtcpReportItem] = useState<RtcpReport>();
+  const [rtcpReportModalShow, setRtcpReportModalShow] = useState(false);
+
 
   const ShowEmpty = () => {
     if (!loading && records.length <= 0 && relevants.length <= 0 && rtcpPackets.length <= 0) {
@@ -91,6 +98,18 @@ export default function SequenceDiagram(p: Prop) {
     };
   }, [rtcpPackets, activeTabKey]);
 
+  useEffect(() => {
+    if (rtcpReport && rtcpReportRef.current && activeTabKey === "rtcp_report") {
+      renderRtcpReport(rtcpReportRef.current, rtcpReport);
+    }
+
+    return () => {
+      if (rtcpReportRef.current) {
+        rtcpReportRef.current.innerHTML = "";
+      }
+    };
+  }, [rtcpReport, activeTabKey]);
+
   const handleTabChange = (key: string) => {
     setActiveTabKey(key);
 
@@ -110,6 +129,12 @@ export default function SequenceDiagram(p: Prop) {
         rtcpRef.current
       ) {
         renderRtcpChart(rtcpRef.current, rtcpPackets);
+      } else if (
+        key === "rtcp_report" &&
+        rtcpReport &&
+        rtcpReportModalShow
+      ) {
+        renderRtcpReport(rtcpReportRef.current, rtcpReport);
       }
     }, 100); // Small delay to ensure DOM is ready
   };
@@ -394,6 +419,90 @@ export default function SequenceDiagram(p: Prop) {
     });
   };
 
+  const renderRtcpReport = (container: HTMLDivElement |  null, data: RtcpReport) => {
+    if (!container) return;
+
+    // 清除之前的内容
+    container.innerHTML = "";
+
+    // 创建RTCP报告表格容器
+    const tableContainer = document.createElement("div");
+    tableContainer.style.width = "100%";
+    tableContainer.style.padding = "20px";
+    container.appendChild(tableContainer);
+
+    // 创建表格
+    const table = document.createElement("table");
+    table.style.width = "100%";
+    table.style.borderCollapse = "collapse";
+    table.style.marginTop = "20px";
+    table.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.1)";
+    tableContainer.appendChild(table);
+
+    // 创建表头
+    const thead = document.createElement("thead");
+    table.appendChild(thead);
+    
+    const headerRow = document.createElement("tr");
+    thead.appendChild(headerRow);
+    
+    const headers = ["指标", "Aleg", "Bleg"];
+    headers.forEach(header => {
+      const th = document.createElement("th");
+      th.textContent = header;
+      th.style.padding = "12px 15px";
+      th.style.backgroundColor = "#f8f9fa";
+      th.style.borderBottom = "2px solid #ddd";
+      th.style.textAlign = "left";
+      headerRow.appendChild(th);
+    });
+
+    // 创建表格内容
+    const tbody = document.createElement("tbody");
+    table.appendChild(tbody);
+    
+    // 定义要显示的指标
+    const metrics = [
+      { name: "MOS", aleg: data.aleg_mos, bleg: data.bleg_mos },
+      { name: "丢包数", aleg: data.aleg_packet_lost, bleg: data.bleg_packet_lost },
+      { name: "数据包总数", aleg: data.aleg_packet_count, bleg: data.bleg_packet_count },
+      { name: "丢包率", aleg: data.aleg_packet_lost_rate, bleg: data.bleg_packet_lost_rate },
+      { name: "平均抖动", aleg: data.aleg_jitter_avg, bleg: data.bleg_jitter_avg },
+      { name: "最大抖动", aleg: data.aleg_jitter_max, bleg: data.bleg_jitter_max },
+      { name: "平均延迟", aleg: data.aleg_delay_avg, bleg: data.bleg_delay_avg },
+      { name: "最大延迟", aleg: data.aleg_delay_max, bleg: data.bleg_delay_max }
+    ];
+    
+    // 添加行
+    metrics.forEach((metric, index) => {
+      const row = document.createElement("tr");
+      row.style.backgroundColor = index % 2 === 0 ? "#fff" : "#f8f9fa";
+      
+      const metricCell = document.createElement("td");
+      metricCell.textContent = metric.name;
+      metricCell.style.padding = "12px 15px";
+      metricCell.style.borderBottom = "1px solid #ddd";
+      metricCell.style.fontWeight = "bold";
+      row.appendChild(metricCell);
+      
+      const alegCell = document.createElement("td");
+      alegCell.textContent = metric.aleg?.toString() || "N/A";
+      alegCell.style.padding = "12px 15px";
+      alegCell.style.borderBottom = "1px solid #ddd";
+      row.appendChild(alegCell);
+      
+      const blegCell = document.createElement("td");
+      blegCell.textContent = metric.bleg?.toString() || "N/A";
+      blegCell.style.padding = "12px 15px";
+      blegCell.style.borderBottom = "1px solid #ddd";
+      row.appendChild(blegCell);
+      
+      tbody.appendChild(row);
+    });
+  };
+
+
+
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const sipCallId = p.callID || searchParams.get("sip_call_id") || "";
@@ -410,6 +519,9 @@ export default function SequenceDiagram(p: Prop) {
       }
       if (res.data.rtcp_packets && res.data.rtcp_packets.length > 0) {
         setRtcpPackets(res.data.rtcp_packets);
+      }
+      if (res.data.rtcp_report) {
+        setRtcpReport(res.data.rtcp_report);
       }
       setLoading(false);
     });
@@ -433,6 +545,9 @@ export default function SequenceDiagram(p: Prop) {
           </Tabs.TabPane>
           <Tabs.TabPane tab="RTCP" key="rtcp">
             <div ref={rtcpRef}></div>
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="RTCP报告" key="rtcp_report">
+            <div ref={rtcpReportRef}></div>
           </Tabs.TabPane>
         </Tabs>
 

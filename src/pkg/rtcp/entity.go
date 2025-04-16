@@ -54,36 +54,6 @@ func (p *RTCPPacket) String() string {
 	return string(json)
 }
 
-// RTCPPacket 是一个通用的 RTCP 报文封装
-type RTCPPacketComplete struct {
-	SSRC       uint32         `json:"ssrc"` // 报文自身的 SSRC
-	PacketType RTCPPacketType `json:"type"` // RTCP 类型
-	// 以下字段根据 PacketType 选用：
-
-	// === SR/RR 专用 ===
-	SenderInfo   *SenderInformation `json:"sender_information,omitempty"` // SR 才有
-	ReportCount  uint8              `json:"report_count,omitempty"`       // SR/RR 才有(似乎都是1)
-	ReportBlocks []ReportBlock      `json:"report_blocks,omitempty"`      // SR/RR 才有
-
-	// === XR 专用 ===
-	ReportBlocksXR *XRReportBlock `json:"report_blocks_xr,omitempty"` // XR 才有
-
-	// === SDES 专用 ===
-	SDESSSRC   uint32      `json:"sdes_ssrc,omitempty"`   // SDES 块中的 SSRC
-	SDESChunks []SDESChunk `json:"sdes_chunks,omitempty"` // SDES 才有
-
-	// === BYE 专用 ===
-	ByeReason *string `json:"reason,omitempty"` // BYE 才有，可选退出原因
-
-	// === APP 专用 ===
-	AppSubtype uint8  `json:"subtype,omitempty"` // APP 子类型
-	AppName    string `json:"name,omitempty"`    // APP 名称
-	AppData    []byte `json:"data,omitempty"`    // APP 负载数据
-
-	// === Feedback 专用 (RTPFB/PSFB) ===
-	Feedback []FeedbackMessage `json:"feedback,omitempty"` // 反馈消息列表
-}
-
 // SenderInformation 表示 SR 中的 Sender Info 块
 type SenderInformation struct {
 	NTPTimestampSec  uint64 `json:"ntp_timestamp_sec"`  // NTP 时间戳（秒）
@@ -95,11 +65,11 @@ type SenderInformation struct {
 
 // ReportBlock 表示 SR/RR 中的单个 Report Block
 type ReportBlock struct {
-	SourceSSRC   uint32 `json:"source_ssrc"`    // 源 SSRC
-	FractionLost uint8  `json:"fraction_lost"`  // 丢包率（1/256 单位）
+	SourceSSRC   uint32 `json:"source_ssrc"`    // 源 SSRC（表明这份报告是关于哪个媒体流）
+	FractionLost uint8  `json:"fraction_lost"`  // 丢包率（1/256 单位）（最近一个周期内丢包的比例）
 	PacketsLost  uint64 `json:"packets_lost"`   // 累计丢包数
 	HighestSeqNo uint64 `json:"highest_seq_no"` // 最高序列号
-	IAJitter     uint64 `json:"ia_jitter"`      // 抖动
+	IAJitter     uint64 `json:"ia_jitter"`      // 抖动(单位是 RTP 时间戳)
 	LSR          uint64 `json:"lsr"`            // 最后 SR 中的中间字段
 	DLSR         uint64 `json:"dlsr"`           // 从收到最后 SR 到发送本 RR 的延迟
 }
@@ -116,22 +86,4 @@ type XRReportBlock struct {
 	GapDuration     uint64 `json:"gap_duration"`     // 间隙持续
 	RoundTripDelay  uint64 `json:"round_trip_delay"` // 往返时延
 	EndSystemDelay  uint64 `json:"end_system_delay"` // 系统延迟
-}
-
-// SDESChunk 表示 SDES 中的单个子项（如 CNAME、NAME、EMAIL 等）
-type SDESChunk struct {
-	SSRC  uint32 `json:"ssrc"`  // SDES 块对应的 SSRC
-	Type  uint8  `json:"type"`  // SDES 子项类型 (0=CNAME,1=NAME,2=EMAIL,…)
-	Value string `json:"value"` // 对应的文本值
-}
-
-// FeedbackMessage 表示 RTPFB/PSFB 的反馈消息
-type FeedbackMessage struct {
-	// 对于 Transport Feedback (RTPFB)，可能有 packet IDs, feedback time 等字段
-	// 对于 Payload-specific Feedback (PSFB)，可能有 Picture Loss Indication (PLI), Full Intra Request (FIR) 等
-	// 这里可以根据需要进一步拆分
-	SSRC       uint32   `json:"ssrc"`                  // 反馈目标 SSRC
-	Fmt        uint8    `json:"fmt"`                   // feedback 子类型
-	PacketSeqs []uint16 `json:"packet_seqs,omitempty"` // 反馈的包序号列表
-	// … 其它根据 FMT 拓展的字段
 }
